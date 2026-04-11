@@ -1,0 +1,2512 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chasse — Tableau de bord hors-ligne</title>
+  <link rel="manifest" href="/Chasse/manifest.webmanifest">
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root{
+      --bg:#0f172a; /* slate-900 */
+      --panel:#111827; /* gray-900 */
+      --muted:#94a3b8; /* slate-400 */
+      --text:#e5e7eb; /* gray-200 */
+      --accent:#22c55e; /* green-500 */
+      --accent2:#60a5fa; /* blue-400 */
+      --warn:#f59e0b; /* amber-500 */
+      --danger:#ef4444; /* red-500 */
+      --ok:#10b981; /* emerald-500 */
+      --card:#0b1222;
+      --border:#1f2937;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:linear-gradient(180deg, #0b1222, #0f172a 60%);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:50; backdrop-filter: blur(6px);
+      background:rgba(11,18,34,.7); border-bottom:1px solid var(--border);
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:12px 16px}
+    h1{font-size:20px; margin:6px 0 2px}
+    .sub{font-size:12px; color:var(--muted)}
+    .grid{display:grid; gap:12px}
+    .cards{grid-template-columns: repeat(auto-fit,minmax(260px,1fr));}
+    .card{background:linear-gradient(180deg,#0e162c,#0b1222); border:1px solid var(--border); border-radius:14px; padding:14px; box-shadow:0 10px 25px rgba(0,0,0,.25)}
+    .card h3{margin:0 0 8px; font-size:16px}
+    .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    button, input[type="text"], input[type="time"], input[type="date"], textarea, select{
+    background:#0a1325; color:var(--text); border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:14px;
+    }
+    textarea{ min-height: 60px; } /* LIGNE AJOUTÉE */
+    button{cursor:pointer}
+    button.primary{background:linear-gradient(90deg,#16a34a,#22c55e); color:#04120a; font-weight:700; border:none}
+    button.secondary{background:#0a1325}
+    .pill{display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); color:var(--muted)}
+    .tabbar{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
+    .tabbar button{border-radius:999px; padding:8px 12px}
+    .tabbar button.active{background:linear-gradient(90deg,#60a5fa,#22c55e); color:#041018; font-weight:700}
+    section{display:none}
+    section.active{display:block}
+    .list li{display:flex; gap:8px; align-items:flex-start; padding:8px 0; border-bottom:1px dashed #1e293b}
+    .list label{flex:1}
+    .list input[type="checkbox"]{width:18px; height:18px; margin-top:3px}
+    .muted{color:var(--muted)}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:13px}
+    .two{display:grid; gap:12px; grid-template-columns:1fr 1fr}
+    @media(max-width:800px){.two{grid-template-columns:1fr}}
+    .inline{display:inline-flex; gap:6px; align-items:center}
+    .badge{padding:4px 8px; border:1px solid var(--border); border-radius:999px; font-size:12px}
+    .ok{color:var(--ok)}.warn{color:var(--warn)}.dang{color:var(--danger)}
+    .kbd{border:1px solid var(--border); padding:2px 6px; border-radius:6px; background:#0a1325; font-size:12px}
+    .hint{font-size:12px; color:var(--muted)}
+    .spacer{height:8px}
+    .footer{font-size:12px; color:var(--muted); text-align:center; padding:24px 8px}
+    .hr{height:1px; background:var(--border); margin:10px 0}
+    .small{font-size:12px}
+    .chip{font-size:11px; border:1px solid var(--border); padding:3px 6px; border-radius:8px}
+    .compass{ position:relative; width:220px; height:220px; border:1px solid var(--border); border-radius:50%; margin:8px auto; }
+    .needle{ position:absolute; left:50%; top:50%; width:4px; height:95px; background:var(--accent2);
+      transform-origin:50% 100%; transform:translate(-50%, -100%) rotate(0deg); border-radius:2px; box-shadow:0 0 10px rgba(96,165,250,.6);}
+    .dot{ position:absolute; left:50%; top:50%; width:10px; height:10px; background:var(--accent); border-radius:50%; transform:translate(-50%,-50%);}
+    .wind-indicator {
+    display: inline-block;
+    font-size: 14px;
+    margin-left: 8px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: bold;
+    }
+    .wind-indicator.good { color: var(--ok); }
+    .wind-indicator.bad { color: var(--danger); }
+    .wind-indicator.okay { color: var(--warn); }
+    /* --- Styles pour les notifications "Toast" --- */
+#toastContainer {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.toast {
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: linear-gradient(180deg,#0e162c,#0b1222);
+    border: 1px solid var(--border);
+    color: var(--text);
+    box-shadow: 0 5px 15px rgba(0,0,0,.3);
+    opacity: 0;
+    animation: fadeInOut 4s ease-out forwards;
+}
+
+.toast.ok { border-left: 4px solid var(--ok); }
+.toast.warn { border-left: 4px solid var(--warn); }
+.toast.error { border-left: 4px solid var(--danger); }
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0; transform: translateX(100%); }
+    10%, 90% { opacity: 1; transform: translateX(0); }
+}
+button.danger-btn {
+    background: var(--danger);
+    color: white;
+    font-weight: 700;
+    border: none;
+}
+/* Style par défaut pour les grands écrans (tablette/ordinateur) */
+#menu-grid-container {
+    grid-template-columns: 300px 1fr;
+}
+
+/* Rend l'onglet des menus adaptatif pour les mobiles */
+@media (max-width: 768px) {
+    #menu-grid-container {
+        grid-template-columns: 1fr; /* Force une seule colonne */
+    }
+}
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer; /* Indique que c'est cliquable */
+    padding: 8px; /* Un peu d'espace pour mieux cliquer */
+    margin: -8px; /* Compense le padding pour garder l'alignement */
+}
+
+.collapsible-header .chevron {
+    transition: transform 0.2s ease-in-out;
+}
+
+.collapsible-content {
+    display: none; /* Contenu caché par défaut */
+    padding-top: 16px;
+}
+
+/* Classe qu'on ajoutera avec JS pour afficher le contenu */
+.visible .collapsible-content {
+    display: block;
+}
+
+/* Fait tourner la flèche quand la section est ouverte */
+.visible .chevron {
+    transform: rotate(180deg);
+}
+/* Styles pour la fenêtre modale */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+/* Styles pour le mode nuit */
+body.night-mode {
+    --bg: #000000;
+    --panel: #100000;
+    --card: #0a0000;
+    --text: #ff4040;
+    --muted: #b32a2a;
+    --accent: #ff5252;
+    --accent2: #ff6666;
+    --border: #400000;
+    --ok: #ff5252;
+    --warn: #ff5252;
+    --danger: #ff6666;
+}
+
+/* Optionnel : Fait briller le bouton quand le mode nuit est actif */
+body.night-mode #nightModeToggle {
+    color: var(--danger);
+    box-shadow: 0 0 8px var(--danger);
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+}
+
+/* === MODE TERRAIN (4x4) === */
+#mode4x4Overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    padding: 14px; gap: 12px;
+    overflow-y: auto;
+}
+.m4-header {
+    text-align: center; padding: 10px 12px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+}
+.m4-coords { font-family: monospace; font-size: 18px; color: var(--accent2); font-weight: 700; }
+.m4-hint-sm { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.m4-title-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 0; font-size: 14px; font-weight: 700; letter-spacing: .5px; color: var(--muted);
+}
+.m4-btn {
+    width: 100%; min-height: 76px; font-size: 22px; font-weight: 700;
+    border-radius: 16px; border: none; cursor: pointer; letter-spacing: .5px;
+}
+.m4-btn-primary { background: linear-gradient(90deg,#16a34a,#22c55e); color: #04120a; }
+.m4-btn-danger  { background: var(--danger); color: #fff; }
+.m4-btn-sec     { background: #0a1325; color: var(--text); border: 1px solid var(--border); font-size: 16px; min-height: 56px; }
+.m4-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.m4-card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 12px 10px; text-align: center;
+}
+.m4-card-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.m4-card-big   { font-size: 28px; font-weight: 700; line-height: 1.15; }
+.m4-card-sub   { font-size: 15px; color: var(--muted); margin-top: 4px; }
+.m4-route-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 4px; border-bottom: 1px dashed var(--border); font-size: 16px;
+}
+.m4-route-name { font-weight: 600; }
+.m4-route-dist { color: var(--accent); font-family: monospace; font-size: 14px; }
+.m4-total { font-size: 13px; color: var(--muted); text-align: right; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h1>Tableau de bord — Chasse</h1>
+          <div class="sub">Hors-ligne • Québec • Enregistre localement (aucune donnée envoyée)</div>
+        </div>
+        <div class="row">
+    <button id="nightModeToggle" class="secondary" title="Activer/Désactiver le mode nuit">🌙</button>
+    <button id="mode4x4Btn" class="secondary" title="Mode Terrain — gros boutons GPS">🚗 4x4</button>
+    </div>
+        <div class="row">
+          <button id="emergencyBtn" class="danger-btn" title="Envoyer un SMS d'urgence avec votre position">🆘 URGENCE</button>
+          </div>
+      </div>
+      <div class="tabbar" id="tabs"></div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Onglet: Jour & soleil -->
+<section id="tab-jour" class="active">
+
+    <div id="actions-card" class="card visible">
+        <div class="collapsible-header">
+            <h3>Actions Rapides</h3>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-content">
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+                <button id="geoBtn" class="primary">📍 Localiser</button>
+                <button id="markEventBtn" class="secondary" title="Enregistre un waypoint rapide à votre position actuelle avec l'heure">🚩 Marquer Événement</button>
+                <button id="sharePosBtn" class="secondary" title="Partager votre position actuelle par SMS">📲 Partager Position</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sun-card" class="card visible">
+        <div class="collapsible-header">
+            <h3>Soleil & Lune</h3>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-content">
+            <div id="sunOut" class="grid" style="grid-template-columns:repeat(2,minmax(160px,1fr)); gap:10px"></div>
+            <div class="hr"></div>
+            <div class="small muted">La fenêtre "Début/Fin légale" affiche ±30 minutes autour du lever/coucher. Vérifiez toujours la réglementation officielle.</div>
+        </div>
+    </div>
+
+    <div id="weather-card" class="card visible">
+        <div class="collapsible-header">
+            <h3>Météo</h3>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-content">
+            <div class="row">
+                <button id="updateWeatherBtn" class="primary">Mettre à jour la météo</button>
+                <div id="weatherStatus" class="small muted" style="margin-left:8px; align-self:center;"></div>
+            </div>
+            <div class="hr"></div>
+            <div id="weatherOut">
+                <div class="muted">Cliquez sur "Mettre à jour" lorsque vous avez une connexion internet.</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="recherche-card" class="card">
+        <div class="collapsible-header">
+            <h3>Recherche de Gibier</h3>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-content">
+            <div id="start-tracking-div">
+                <p class="small muted">Après un tir, attendez 30 min, puis démarrez une session pour marquer la piste.</p>
+                <button id="startTrackingBtn" class="primary" style="width:100%;">Démarrer la recherche</button>
+            </div>
+            <div id="active-tracking-div" style="display:none;">
+                <p class="small ok"><strong>Mode Recherche ACTIF.</strong></p>
+                <button id="markTraceBtn" class="primary" style="width:100%; margin-bottom: 8px; background-color: var(--error);">🩸 Marquer une trace</button>
+                <button id="stopTrackingBtn" class="secondary" style="width:100%;">Arrêter la recherche</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="location-card" class="card">
+        <div class="collapsible-header">
+            <h3>Emplacement Détaillé & Préréglages</h3>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-content">
+            <div class="row">
+                <input id="lat" type="text" placeholder="Latitude" class="mono" style="flex:1;" />
+                <input id="lng" type="text" placeholder="Longitude" class="mono" style="flex:1; margin-left:8px;" />
+            </div>
+             <div class="row" style="margin-top:8px;">
+                <input id="datePick" type="date" style="flex:1;" />
+                <button id="pasteCoordBtn" class="secondary" title="Coller des coordonnées" style="margin-left:8px;">Coller</button>
+                <button id="permBtn" class="secondary" title="Voir l'autorisation GPS">Perm.</button>
+            </div>
+            <div class="hr"></div>
+            <div class="row" style="margin-top:8px">
+                <select id="presetSelect" style="flex:1;">
+                    <option value="">— Emplacement prédéfini —</option>
+                    <option value="Rivière-à-Pierre — Orignal">Rivière-à-Pierre — Orignal</option>
+                    <option value="Rivière-à-Pierre — Ours">Rivière-à-Pierre — Ours</option>
+                    <option value="Sainte-Anne-de-la-Pérade — Chevreuil">Sainte-Anne-de-la-Pérade — Chevreuil</option>
+                    <option value="Sainte-Brigitte-de-Laval — Chevreuil">Sainte-Brigitte-de-Laval — Chevreuil</option>
+                </select>
+                <button id="presetApply" class="secondary" title="Appliquer le préréglage">Appliquer</button>
+                <button id="presetSave" class="secondary" title="Sauvegarder les coordonnées actuelles">Enreg.</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="waypoints-card" class="card">
+        <div class="collapsible-header">
+            <h3>Waypoints (spots)</h3>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-content">
+            <div class="row">
+                <input id="wpName" type="text" placeholder="Nom du spot (ex: Mirador Nord)" style="flex:1" />
+                <button id="wpAdd" class="primary" style="margin-left:8px;">Ajouter</button>
+            </div>
+            <div class="row" style="margin-top:8px;">
+                <input id="wpLat" type="text" placeholder="Lat" class="mono" style="flex:1" />
+                <input id="wpLng" type="text" placeholder="Lng" class="mono" style="flex:1; margin: 0 8px;" />
+                <button id="wpFromGPS" class="secondary" title="Remplir depuis le GPS">📍</button>
+            </div>
+            <div class="hr"></div>
+<h4>Échange de Waypoints</h4>
+<p class="small muted">Partagez vos spots (format JSON ou CSV).</p>
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
+    <button id="importWpBtn" class="primary">📥 Importer</button>
+    <button id="exportWpBtn" class="secondary">📤 Exporter</button>
+</div>
+            <div id="wpList" class="list" style="margin-top:16px"></div>
+        </div>
+    </div>
+    
+    <div id="boussole-card" class="card">
+    <div class="collapsible-header">
+        <h3>Boussole vers le camp</h3>
+        <span class="chevron">▼</span>
+    </div>
+    <div class="collapsible-content">
+        <div class="row">
+            <select id="campSelect" style="flex:1;">
+                <option value="">— Choisir un waypoint comme camp —</option>
+            </select>
+            <button id="campUseWp" class="secondary" title="Définir le camp = waypoint sélectionné">Définir</button>
+        </div>
+        <div class="row" style="margin-top:8px;">
+            <button id="campUseFields" class="secondary" title="Définir le camp = Lat/Lng (Emplacement & date)">Camp = Emplacement Actuel</button>
+            <button id="campTrack" class="secondary" title="Activer/désactiver le suivi GPS">Suivi GPS : OFF</button>
+            <button id="campOrient" class="secondary" title="Activer la boussole du téléphone">Activer boussole</button>
+        </div>
+        
+        <div class="row" style="margin-top:8px">
+            <label for="declinaison" class="small muted">Déclinaison magn.:</label>
+            <input id="declinaison" type="text" value="-13" class="mono" style="width:60px" title="Déclinaison magnétique locale (ex: -13 pour Québec ouest)">
+            <span class="small muted">°</span>
+        </div>
+        
+        <div class="hr"></div>
+        <div id="compass" class="compass">
+            <div class="needle" id="needle"></div>
+            <div class="dot"></div>
+        </div>
+        <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center;">
+            <div>
+                <div class="small muted">Azimut</div>
+                <div id="campAz"><b>—</b></div>
+            </div>
+            <div>
+                <div class="small muted">Distance</div>
+                <div id="campDist"><b>—</b></div>
+            </div>
+            <div>
+                <div class="small muted">Direction</div>
+                <div id="campDir"><b>—</b></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div id="minuteries-card" class="card">
+        <div class="collapsible-header">
+            <h3>Minuteries rapides</h3>
+            <span class="chevron">▼</span>
+        </div>
+        <div class="collapsible-content">
+            <div class="row">
+                <button data-mins="15" class="secondary timerBtn">15 min</button>
+                <button data-mins="30" class="secondary timerBtn">30 min</button>
+                <button data-mins="60" class="secondary timerBtn">60 min</button>
+            </div>
+            <div id="timerArea" class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); margin-top:8px; gap:8px"></div>
+        </div>
+    </div>
+
+</section>
+
+    <!-- Onglet: Checklists -->
+    <section id="tab-check">
+  <div class="card">
+    <h3>Générateur de Checklist du Jour</h3>
+    <p class="muted">Sélectionnez les blocs d'équipement pertinents pour votre sortie et générez une checklist unifiée.</p>
+    <div id="moduleSelector" class="grid" style="grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); margin-top:10px;">
+      </div>
+    <div class="hr"></div>
+    <button id="generateChecklistBtn" class="primary" style="width:100%;">Générer ma checklist pour aujourd'hui</button>
+  </div>
+  <div class="card">
+    <h3>Checklist Active</h3>
+    <ul id="activeChecklist" class="list">
+      <li class="muted">Aucune checklist générée.</li>
+    </ul>
+  </div>
+</section>
+
+    <!-- Onglet: Matériel & Séjour -->
+<section id="tab-pack">
+  <div class="two">
+    <div class="card">
+    <h3>Gestion des Blocs d'Équipement</h3>
+
+    <div class="row">
+        <input id="packListNewName" type="text" placeholder="Nom du nouveau bloc..." style="flex:1">
+        <button id="packListCreate" class="primary">Créer</button>
+    </div>
+
+    <div class="hr"></div>
+
+    <label for="packListSelect">Listes existantes</label>
+    <div class="row">
+        <select id="packListSelect" style="flex:1"></select>
+        <button id="packListLoad" class="secondary">Charger</button>
+        <button id="packListDelete" class="secondary danger-btn">Supprimer</button>
+    </div>
+
+    <div class="hr"></div>
+    
+    <h4>Échange de Blocs</h4>
+    <p class="small muted">Importez ou exportez des blocs individuels (en format JSON ou CSV) pour les partager.</p>
+    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button id="importPackListBtn" class="secondary">📥 Importer un bloc</button>
+        <button id="exportPackListBtn" class="secondary">📤 Exporter bloc chargé</button>
+    </div>
+</div>
+<div class="hr"></div>
+<div id="packListEditor">
+    <h3 id="currentPackListTitle">Éditeur de bloc</h3>
+    
+    <div id="packListContainer" style="display:none;">
+        <ul id="listPack" class="list" style="padding: 0; margin: 0; list-style: none;">
+            </ul>
+        <div class="hr"></div>
+        <div class="row">
+            <input id="addPackTxt" type="text" placeholder="Ajouter un item...">
+            <button id="addPackItemBtn" class="secondary">+ Ajouter</button>
+        </div>
+    </div>
+
+    <div id="packListHint" class="muted">
+        Chargez ou créez un bloc pour voir son contenu.
+    </div>
+</div>
+    <div class="card">
+      <h3>Notes rapides</h3>
+      <textarea id="notes" rows="12" style="width:100%" placeholder="Conditions, traces, vent, coups de feu, animaux vus, etc."></textarea>
+      <div class="row" style="margin-top:8px; justify-content:space-between">
+        <span class="hint">Enregistré automatiquement.</span>
+        <button id="printBtn" class="secondary">🖨️ Imprimer</button>
+      </div>
+    </div>
+    </div>
+</section>
+
+    <!-- Onglet: Menus -->
+<section id="tab-menus">
+    <div class="card">
+        <h3>Gestion des Plans de Repas</h3>
+        <label for="menuNewPlanName">Créer un nouveau plan</label>
+        <div class="row">
+            <input type="text" id="menuNewPlanName" placeholder="Nom du nouveau plan...">
+            <button id="menuCreatePlanBtn" class="primary">Créer</button>
+        </div>
+    </div>
+
+    <div id="menu-grid-container" class="grid" style="gap: 16px; align-items: flex-start;">
+        <div id="menuPlanList" class="card list">
+            <div class="muted">Aucun plan de repas.</div>
+        </div>
+
+        <div id="menuPlanEditor" class="card" style="display:none;">
+            <div class="row" style="justify-content: space-between;">
+                <h3 id="menuEditorTitle"></h3>
+                <div class="row">
+                    <button id="importMenuPlanBtn" class="primary small">📥 Importer</button>
+                    <button id="exportMenuPlanBtn" class="secondary small">📤 Exporter</button>
+                    <button id="menuDeletePlanBtn" class="secondary small danger-btn">Supprimer</button>
+                </div>
+            </div>
+            <div class="hr"></div>
+            <div class="row">
+                <label for="menuEditorStartDate">Date de début:</label>
+                <input type="date" id="menuEditorStartDate">
+                <label for="menuEditorNumDays" style="margin-left:auto;">Durée (jours):</label>
+                <input type="number" id="menuEditorNumDays" value="3" style="width:70px;">
+            </div>
+            <div id="menuEditorDaysContainer" style="margin-top:16px;">
+                </div>
+        </div>
+    </div>
+</section>
+<section id="tab-journal">
+
+    <div class="card">
+        <h3>Nouvelle Entrée au Journal</h3>
+        <p class="small muted" style="margin: 0 0 12px 0;">
+            Cliquez sur un type d'événement, ajoutez une note (optionnel), puis cliquez sur "Ajouter". La position sera prise automatiquement.
+        </p>
+
+        <div id="logTypeButtons" class="grid" style="grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px;">
+            <button class="log-type-btn secondary" data-type="🦌 Animal vu">🦌 Animal vu</button>
+            <button class="log-type-btn secondary" data-type="🐾 Trace / Signe">🐾 Trace / Signe</button>
+            <button class="log-type-btn secondary" data-type="🔊 Appel entendu">🔊 Appel entendu</button>
+            <button class="log-type-btn secondary" data-type="💥 Tir">💥 Tir</button>
+            <button class="log-type-btn secondary" data-type="📝 Autre">📝 Autre</button>
+        </div>
+
+        <div style="margin-top:12px;">
+            <label for="logNotes">Notes (optionnel)</label>
+            <textarea id="logNotes" rows="2" style="width:100%"></textarea>
+        </div>
+
+        <input type="hidden" id="selectedLogType"> <input type="hidden" id="logLat">
+        <input type="hidden" id="logLng">
+
+        <div class="hr"></div>
+        <button id="logAddBtn" class="primary" style="width:100%;">+ Ajouter au journal</button>
+    </div>
+    <div class="card">
+        <h3>Historique du Journal</h3>
+        <div id="logList">
+            </div>
+    </div>
+</section>
+    <section id="tab-zones">
+  <div class="card">
+    <h3>Réglementation par Zone (Québec)</h3>
+    <div class="row">
+      <label for="zoneSelect">Choisir une zone de chasse :</label>
+      <select id="zoneSelect" style="flex:1;"></select>
+    </div>
+    <div class="hr"></div>
+    <div id="zoneInfoDisplay">
+      <div class="muted">Sélectionnez une zone pour afficher les principales périodes de chasse.</div>
+    </div>
+    <div class="hr"></div>
+    <div class="small dang" style="font-weight:bold;">
+      NOTE : Ces informations sont un aide-mémoire. Vérifiez toujours la réglementation officielle du MFFP.
+    </div>
+  </div>
+</section>
+<section id="tab-balistique">
+    <div class="card">
+        <h3>Calculateur Balistique Simple</h3>
+        <p class="small muted">
+            Estime la chute d'une balle. Entrez les données de votre munition et de votre carabine.
+        </p>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div>
+                <label for="balsVelocite">Vitesse initiale (pi/s)</label>
+                <input type="number" id="balsVelocite" value="2800">
+            </div>
+            <div>
+                <label for="balsCoef">Coefficient balistique (G1)</label>
+                <input type="number" id="balsCoef" step="0.01" value="0.45">
+            </div>
+            <div>
+                <label for="balsZero">Distance du zéro (verges)</label>
+                <input type="number" id="balsZero" value="200">
+            </div>
+            <div>
+                <label for="balsHausse">Hauteur de la mire (po)</label>
+                <input type="number" id="balsHausse" step="0.1" value="1.5">
+            </div>
+        </div>
+        <div class="hr"></div>
+        <button id="balsCalculerBtn" class="primary" style="width:100%;">Calculer la trajectoire</button>
+    </div>
+
+    <div class="card">
+        <h3>Résultats de Trajectoire</h3>
+        <p class="small muted">La "Trajectoire" indique où la balle frappe par rapport à votre point de visée (en pouces). Une valeur négative signifie que la balle frappe plus bas.</p>
+        <table style="width:100%;" id="balsResultatsTable">
+            <thead>
+                <tr>
+                    <th style="text-align:left;">Distance (verges)</th>
+                    <th style="text-align:right;">Trajectoire (pouces)</th>
+                    <th style="text-align:right;">Vitesse (pi/s)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="3" class="muted" style="text-align:center;">Entrez vos données et cliquez sur "Calculer".</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+<section id="tab-permis">
+    <div class="card">
+    <div class="row" style="justify-content: space-between;">
+        <h3>Portefeuille de Permis</h3>
+        <button id="addPermisBtn" class="primary">+ Ajouter un permis</button>
+    </div>
+    <p class="small muted">Conservez une copie hors-ligne de vos permis (photo ou PDF).</p>
+    <div class="hr"></div>
+<h4>Échange de Permis</h4>
+<p class="small muted">Partagez votre portefeuille de permis.</p>
+<div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px;">
+    <button id="importPermisBtn" class="primary">📥 Importer</button>
+    <button id="exportPermisBtn" class="secondary">📤 Exporter</button>
+</div>
+    <div id="permisListContainer" class="grid cards" style="margin-top:16px;">
+        </div>
+</div>
+</section>
+
+<div id="permisModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content card">
+        <form id="permisForm" onsubmit="return false;">
+            <h3 id="permisModalTitle">Ajouter un Permis</h3>
+            <input type="hidden" id="permisId">
+
+            <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label for="permisGibier">Gibier</label>
+                    <input type="text" id="permisGibier" placeholder="Ex: Chevreuil">
+                </div>
+                <div>
+                    <label for="permisAnnee">Année / Saison</label>
+                    <input type="text" id="permisAnnee" placeholder="Ex: 2025">
+                </div>
+            </div>
+            <div style="margin-top:12px;">
+                <label for="permisNumero">Numéro de permis</label>
+                <input type="text" id="permisNumero">
+            </div>
+
+            <div class="hr"></div>
+
+            <h4>Périodes de Validité</h4>
+            <div id="permisPeriodsList" class="list" style="margin-bottom: 16px;"></div>
+            
+            <div class="card" style="background:var(--bg);">
+                <h5>Ajouter une période</h5>
+                <div class="row">
+                    <input type="text" id="periodZone" placeholder="Zone">
+                    <select id="periodArme">
+                        <option>Arc / Arbalète</option>
+                        <option>Carabine</option>
+                        <option>Fusil Uniquement</option>
+                        <option>Arme à chargement par la bouche</option>
+                        <option>Toutes armes</option>
+                    </select>
+                </div>
+                <div class="row" style="margin-top:8px;">
+                    <input type="date" id="periodDebut">
+                    <input type="date" id="periodFin">
+                    <button id="addPeriodBtn" type="button" class="primary">Ajouter</button>
+                </div>
+            </div>
+
+            <div class="hr"></div>
+
+            <div style="margin-top:12px;">
+                <label for="permisCapture">Copie du permis (Photo/PDF)</label>
+                <input type="file" id="permisCapture">
+                <p id="permisCurrentFile" class="small muted" style="margin-top:4px;"></p>
+            </div>
+        </form>
+
+        <div class="hr"></div>
+        <div class="row" style="justify-content: flex-end;">
+            <button id="permisCancelBtn" class="secondary">Annuler</button>
+            <button id="permisSaveBtn" class="primary">Enregistrer</button>
+        </div>
+    </div>
+</div>
+    <!-- Onglet: Aide -->
+    <section id="tab-aide">
+      <div class="card">
+    <h3>Maintenance</h3>
+    <p class="small muted">Actions potentiellement destructrices.</p>
+    <button id="resetBtn" class="secondary danger-btn" style="width:100%;">Réinitialiser TOUTES les données</button>
+</div>
+<div class="card">
+    <h3>Exporter des Données</h3>
+    <p class="small muted">
+        Choisissez un type de donnée à exporter. Vous pourrez ensuite le télécharger ou le partager.
+    </p>
+    <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-top:12px;">
+        <button class="secondary export-btn" data-export-type="waypoints">📍 Waypoints & Camp</button>
+        <button class="secondary export-btn" data-export-type="permis">📜 Permis</button>
+        <button class="secondary export-btn" data-export-type="packlists">🎒 Équipement</button>
+        <button class="secondary export-btn" data-export-type="menus">🍽️ Menus</button>
+    </div>
+    <div class="hr"></div>
+    <button id="downloadFullBackupBtn" class="secondary" style="width:100%;">Exporter la sauvegarde complète (JSON)</button>
+</div>
+
+<div class="card">
+    <h3>Importer des Données</h3>
+    <p class="small muted">
+        Importez un fichier de sauvegarde. L'application détectera automatiquement le type de données (complète, waypoints, permis, etc.).
+    </p>
+    <button id="importBtn" class="primary" style="width:100%; margin-top:12px;">Importer un fichier</button>
+    <input id="importFile" type="file" accept="application/json" style="display:none" />
+</div>
+      
+      <div class="card">
+        <h3>Conseils & rappels</h3>
+        <ul class="list">
+          <li><span class="badge">Sécurité</span><span class="muted"> Informe quelqu'un de ton spot et de ton heure de retour. Porte ton dossard orange selon la réglementation.</span></li>
+          <li><span class="badge">Orientation</span><span class="muted"> Télécharge les cartes hors-ligne (Google Maps, Avenza) avant de partir. Emporte une boussole.</span></li>
+          <li><span class="badge">Batterie</span><span class="muted"> Mode avion + GPS lorsqu'immobile; banque d'alimentation chargée.</span></li>
+          <li><span class="badge">Météo</span><span class="muted"> Vérifie la météo et le vent avant de perdre le réseau. Prévoyez des vêtements secs pour le retour.</span></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Mentions</h3>
+        <div class="small muted">Cet outil reste local (LocalStorage). Le calcul solaire utilise une implémentation embarquée basée sur les formules NOAA (approx.).
+          Les heures affichées sont indicatives; respecte toujours la réglementation officielle du territoire de chasse.</div>
+      </div>
+      <div class="card">
+        <h3>Synchronisation</h3>
+        <p class="small muted">Mettez à jour les données hors-ligne (comme les périodes de chasse) depuis le serveur.</p>
+        <button id="syncBtn" class="secondary">Synchroniser les données</button>
+      </div>
+      <div class="card">
+    <h3>🗳️ Votez pour le nom de l'application !</h3>
+    <p class="small muted">
+        Aidez-moi à choisir le nom officiel ! Sélectionnez votre option préférée, puis cliquez sur "Soumettre" pour m'envoyer votre choix par courriel.
+    </p>
+    
+    <div id="domain-options-list" style="margin-top:16px;">
+        <label style="display:block; padding:8px; border-radius:4px; border:1px solid #334155; margin-bottom:8px;">
+            <input type="radio" name="domain_vote" value="TableauChasse.ca"> <strong>TableauChasse.ca</strong> (Simple et clair)
+        </label>
+        <label style="display:block; padding:8px; border-radius:4px; border:1px solid #334155; margin-bottom:8px;">
+            <input type="radio" name="domain_vote" value="ChasseMate.ca"> <strong>ChasseMate.ca</strong> (Le compagnon de chasse)
+        </label>
+        <label style="display:block; padding:8px; border-radius:4px; border:1px solid #334155; margin-bottom:8px;">
+            <input type="radio" name="domain_vote" value="CarnetChasse.ca"> <strong>CarnetChasse.ca</strong> (Fait référence au journal)
+        </label>
+        <label style="display:block; padding:8px; border-radius:4px; border:1px solid #334155; margin-bottom:8px;">
+            <input type="radio" name="domain_vote" value="SentierChasse.ca"> <strong>SentierChasse.ca</strong> (Évoque l'aventure)
+        </label>
+        <label style="display:block; padding:8px; border-radius:4px; border:1px solid #334155; margin-bottom:8px;">
+            <input type="radio" name="domain_vote" value="ChasseTrack.com"> <strong>ChasseTrack.com</strong> (Moderne et bilingue)
+        </label>
+    </div>
+    
+    <button id="submitVoteBtn" class="primary" style="width:100%; margin-top:16px;">Soumettre mon vote</button>
+</div>
+    </section>
+<section id="tab-guide">
+    <div class="card">
+        <h2>Bienvenue sur votre Compagnon de Chasse ! 🦌</h2>
+        <p>
+            Cette application est conçue pour être votre outil tout-en-un sur le terrain. Son plus grand avantage : <strong>tout fonctionne sans connexion internet</strong>. Vos données restent sur votre téléphone, en toute confidentialité.
+        </p>
+    </div>
+
+    <div class="card">
+        <h3>🧭 Tour d'horizon des fonctionnalités</h3>
+
+        <h4>☀️ Tableau de Bord</h4>
+        <p>L'écran principal est composé de <strong>panneaux dépliables</strong> pour garder l'interface claire. Touchez le titre d'une section pour afficher ou masquer son contenu. Les informations les plus importantes (Actions, Soleil, Météo) sont ouvertes par défaut.</p>
+        <div class="hr"></div>
+
+        <h4>🩸 Recherche de Gibier</h4>
+        <p>Une fonction essentielle après un tir. Dépliez ce panneau, cliquez sur "Démarrer" pour marquer votre position de tir, puis utilisez le bouton "Marquer une trace" à chaque indice trouvé. L'application crée une piste numérique dans vos waypoints, avec la distance et la direction entre chaque point pour ne jamais vous perdre.</p>
+        <div class="hr"></div>
+        
+        <h4>📜 Permis (Nouveau !)</h4>
+        <p>Conservez une copie hors-ligne de vos permis. Pour chaque permis, vous pouvez ajouter <strong>plusieurs périodes de validité</strong> pour gérer les différentes zones et types d'armes, et même attacher une photo ou un PDF de votre permis officiel pour l'avoir toujours sous la main.</p>
+        <div class="hr"></div>
+
+        <h4>📝 Journal</h4>
+        <p>Enregistrez vos observations en un clic. L'application sauvegarde automatiquement l'heure, votre position GPS exacte et la météo (température et vent) à ce moment précis. C'est idéal pour analyser vos sorties plus tard.</p>
+        <div class="hr"></div>
+
+        <h4>📍 Waypoints (Points d'intérêt)</h4>
+        <p>Enregistrez des lieux importants : votre voiture, une souille, un mirador... L'icône de vent à côté de chaque waypoint est un atout majeur :</p>
+        <ul style="list-style:none; padding:0; font-size: 14px;">
+            <li><strong class="ok">Vent BON :</strong> Votre odeur s'éloigne du waypoint.</li>
+            <li><strong class="dang">Vent MAUVAIS :</strong> Votre odeur est poussée vers le waypoint.</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h3>🔄 Échange de Données : Import & Export</h3>
+        <p>
+            Vous pouvez maintenant échanger des informations spécifiques (waypoints, listes d'équipement, permis, menus) avec vos partenaires de chasse. Chaque onglet possède ses propres boutons <strong>"Importer"</strong> et <strong>"Exporter"</strong>.
+        </p>
+
+        <h4>Créer vos propres fichiers CSV</h4>
+        <p class="small muted">Pour préparer votre chasse à l'avance sur un ordinateur, vous pouvez créer des fichiers CSV avec un simple éditeur de texte (Bloc-notes) ou un tableur (Excel). Voici les formats à respecter :</p>
+        
+        <h5>Format pour les Waypoints (.csv)</h5>
+        <p class="small" style="margin-top:-8px;">La première ligne doit être l'en-tête exact. La colonne "notes" est optionnelle.</p>
+        <code class="mono" style="display:block; background: #0a1325; padding: 8px; border-radius: 8px;">
+            name,latitude,longitude,notes<br>
+            Mirador Principal,47.07253,-72.23841,"Belle vue sur la coulée"<br>
+            Saline #1,47.07111,-72.23999,
+        </code>
+
+        <h5>Format pour les Blocs d'Équipement (.csv)</h5>
+        <p class="small" style="margin-top:-8px;">Un seul item par ligne. Pas d'en-tête nécessaire.</p>
+        <code class="mono" style="display:block; background: #0a1325; padding: 8px; border-radius: 8px;">
+            Couteau<br>
+            Appeau à chevreuil<br>
+            Bouteille d'eau
+        </code>
+    </div>
+
+    <div class="card">
+        <h3>🆘 Aide & Fonctions Utilitaires</h3>
+        <p>L'onglet <strong>"Aide"</strong> regroupe toutes les fonctions de maintenance :</p>
+        <ul class="list" style="list-style:none; padding:0;">
+            <li style="border:none;"><strong>Exporter des Données :</strong> Permet d'exporter des modules spécifiques (waypoints, permis, etc.).</li>
+            <li style="border:none;"><strong>Exporter la sauvegarde complète :</strong> Crée un fichier JSON unique avec TOUTES vos données. C'est la meilleure façon de faire une sauvegarde de sécurité.</li>
+            <li style="border:none;"><strong>Importer un fichier :</strong> Permet de charger n'importe quel fichier exporté par l'application.</li>
+             <li style="border:none;"><strong>Maintenance :</strong> Contient le bouton pour réinitialiser complètement l'application.</li>
+        </ul>
+    </div>
+    
+    <div class="card">
+        <h3>📣 Vos Retours</h3>
+        <p>
+            Cette application est en développement. Si vous trouvez un bug ou avez une idée, utilisez le sondage ou le bouton de contact dans l'onglet "Aide". Votre retour est essentiel !
+        </p>
+        <p><strong>Merci et bonne chasse !</strong></p>
+    </div>
+</section>
+  </main>
+
+  <!-- MODE TERRAIN (4x4) — overlay plein écran -->
+  <div id="mode4x4Overlay" style="display:none;">
+
+    <div class="m4-header">
+      <div id="m4-coords" class="m4-coords">En attente du GPS…</div>
+      <div id="m4-accuracy" class="m4-hint-sm"></div>
+    </div>
+
+    <button id="m4-markBtn" class="m4-btn m4-btn-primary">📍 MARQUER ICI</button>
+
+    <div class="m4-two">
+      <div class="m4-card">
+        <div class="m4-card-label">🏕️ Retour au camp</div>
+        <div id="m4-camp-bearing" class="m4-card-big">—</div>
+        <div id="m4-camp-dist" class="m4-card-sub">—</div>
+      </div>
+      <div class="m4-card">
+        <div class="m4-card-label">🌬️ Vent actuel</div>
+        <div id="m4-wind-dir" class="m4-card-big">—</div>
+        <div id="m4-wind-speed" class="m4-card-sub">—</div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:12px;">
+      <div class="m4-title-row">
+        <span>ROUTE EN COURS</span>
+        <span id="m4-count" class="badge">0 pt</span>
+      </div>
+      <div id="m4-route-list">
+        <div class="m4-hint-sm" style="padding:8px 0;">Appuyez sur "MARQUER ICI" pour enregistrer votre premier point.</div>
+      </div>
+      <div id="m4-total-dist" class="m4-total"></div>
+    </div>
+
+    <div class="m4-two">
+      <button id="m4-emergencyBtn" class="m4-btn m4-btn-danger">🆘 URGENCE</button>
+      <button id="m4-exitBtn" class="m4-btn m4-btn-sec">✕ Quitter</button>
+    </div>
+
+  </div>
+
+  <div class="footer">v1.9 — Hors-ligne prêt (PWA)</div>
+
+<script>
+    // --- UTIL & TOASTS ---
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => [...document.querySelectorAll(sel)];
+    const pad = n => (n < 10 ? "0" : "") + n;
+    const fmt = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const store = {
+        get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def } catch (e) { return def } },
+        set(k, v) { localStorage.setItem(k, JSON.stringify(v)) }
+    };
+
+    // --- VARIABLES GLOBALES CENTRALISÉES ---
+    let waypoints = [];
+    let isTracking = false;
+    let currentTrackingSession = [];
+    let journal = [];
+    let currentWind = { temp: null, speed: null, direction: null };
+    let camp = store.get('chasseCamp', null);
+    let currentPos = { lat: null, lng: null };
+    let watchId = null;
+    let heading = null;
+    const timers = [];
+    let allPackLists = {};
+    let currentPackListName = null;
+    let allPlans = {};
+    let currentMenuName = null;
+
+    // 👇 AJOUTEZ CES 3 LIGNES MANQUANTES ICI 👇
+    let allPermis = [];
+    let tempPeriods = [];
+    const PERMIS_KEY = 'chassePermis';
+
+
+
+    // --- CONSTANTES DE L'APPLICATION ---
+    const ZONES_KEY = 'chasseZonesData';
+    const ZONES_DATA_URL = 'https://www.strategief.com/Chasse/zones.json';
+    const LOG_KEY = 'chasseJournal';
+    const WEATHER_KEY = 'chasseWeatherCache';
+    const CAMP_KEY = 'chasseCamp';
+    const PACK_LISTS_KEY = 'chassePackLists';
+    const PLANS_KEY = 'chasseMealPlans';
+    const PRESET_KEY = 'chassePresets'; // <-- CORRECTION : CONSTANTE MANQUANTE AJOUTÉE
+    const PRESET_DEFAULTS = { // <-- CORRECTION : CONSTANTE MANQUANTE AJOUTÉE
+        "Rivière-à-Pierre — Orignal": { lat: 47.07253, lng: -72.23841 },
+        "Rivière-à-Pierre — Ours": { lat: 47.09111, lng: -72.20567 },
+        "Sainte-Anne-de-la-Pérade — Chevreuil": { lat: 46.57890, lng: -72.19982 },
+        "Sainte-Brigitte-de-Laval — Chevreuil": { lat: 47.01234, lng: -71.12345 }
+    };
+    const TABS = [
+        { id: 'jour', label: 'Jour & soleil' }, { id: 'check', label: 'Checklist du Jour' },
+        { id: 'pack', label: 'Blocs d\'Équipement' }, { id: 'menus', label: 'Menus' },
+        { id: 'journal', label: 'Journal' }, { id: 'zones', label: 'Zones' },
+        { id: 'balistique', label: 'Balistique' },
+        { id: 'permis', label: 'Permis' },
+        { id: 'guide', label: 'Guide' }, { id: 'aide', label: 'Aide' }
+    ];
+
+    // --- DÉFINITION DE TOUTES LES FONCTIONS ---
+const STATIC_ZONES_SUMMARY = {
+    "6": {
+        title: "Zone 6 (Nord et Sud)",
+        species: [
+            {
+                name: "Cerf de Virginie 🦌",
+                note: "Mâle avec 3 pointes ou plus sur au moins un côté du panache.",
+                periods: [
+                    { weapon: "Arc / Arbalète", dates: "4 oct. au 17 oct. 2025" },
+                    { weapon: "Arme à feu (sauf carabine), Poudre noire, Arc / Arbalète", dates: "18 oct. au 22 oct. 2025" },
+                    { weapon: "Toutes armes", dates: "8 nov. au 23 nov. 2025" }
+                ]
+            },
+            {
+                name: "Ours Noir 🐻",
+                periods: [
+                    { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2025" },
+                    { weapon: "Automne (Arc / Arbalète)", dates: "4 oct. au 17 oct. 2025" },
+                    { weapon: "Automne (Toutes armes)", dates: "8 nov. au 23 nov. 2025" }
+                ]
+            },
+            {
+                name: "Dindon Sauvage 🦃",
+                periods: [
+                    { weapon: "Printemps (avec barbe)", dates: "25 avr. au 19 mai 2025" },
+                    { weapon: "Automne (avec ou sans barbe)", dates: "25 oct. au 31 oct. 2025" }
+                ]
+            }
+        ]
+    },
+    "7": {
+        title: "Zone 7 (Nord et Sud)",
+        species: [
+            {
+                name: "Cerf de Virginie 🦌",
+                periods: [
+                    { weapon: "Arc / Arbalète", dates: "4 oct. au 17 oct. 2025" },
+                    { weapon: "Arme à feu (sauf carabine), Poudre noire, Arc / Arbalète", dates: "18 oct. au 22 oct. 2025" },
+                    { weapon: "Toutes armes", dates: "8 nov. au 23 nov. 2025" }
+                ]
+            },
+            { name: "Orignal", note: "Chasse non permise dans la zone 7. 🚫", periods: [] },
+            {
+                name: "Ours Noir 🐻",
+                periods: [ { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2025" } ]
+            },
+            {
+                name: "Dindon Sauvage 🦃",
+                periods: [
+                    { weapon: "Printemps (avec barbe)", dates: "25 avr. au 19 mai 2025" },
+                    { weapon: "Automne (avec ou sans barbe)", dates: "25 oct. au 31 oct. 2025" }
+                ]
+            }
+        ]
+    },
+    "27 Ouest": {
+        title: "Zone 27 Ouest",
+        species: [
+            {
+                name: "Orignal ",
+                note: "Mâle avec bois (10 cm ou plus). Attention aux périodes spécifiques aux ZECs.",
+                periods: [
+                    { weapon: "Arc / Arbalète", dates: "20 sept. au 5 oct. 2025" },
+                    { weapon: "Toutes armes", dates: "11 oct. au 26 oct. 2025" }
+                ]
+            },
+            {
+                name: "Cerf de Virginie 🦌",
+                periods: [
+                    { weapon: "Relève seulement", dates: "1 nov. au 2 nov. 2025" },
+                    { weapon: "Toutes armes", dates: "8 nov. au 16 nov. 2025" }
+                ]
+            },
+            {
+                name: "Ours Noir 🐻",
+                periods: [
+                    { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2025" },
+                    { weapon: "Automne (Arc / Arbalète)", dates: "20 sept. au 5 oct. 2025" },
+                    { weapon: "Automne (Toutes armes)", dates: "11 oct. au 19 oct. 2025" }
+                ]
+            },
+            {
+                name: "Dindon Sauvage 🦃",
+                periods: [ { weapon: "Printemps (avec barbe)", dates: "25 avr. au 19 mai 2025" } ]
+            }
+        ]
+    }
+};
+
+/**
+ * Exporte le plan de repas actuellement chargé, en demandant le format.
+ */
+function exportCurrentMenuPlan() {
+    if (!currentMenuName) {
+        showToast("Veuillez d'abord charger un plan de repas.", "warn");
+        return;
+    }
+
+    const format = prompt(`Exporter le plan "${currentMenuName}" en quel format ? (json ou csv)`, "json");
+    if (!format) return; // L'utilisateur a annulé
+
+    const plan = allPlans[currentMenuName];
+    const cleanName = currentMenuName.replace(/\s/g, '_');
+    const filename = `plan-repas-${cleanName}-${new Date().toISOString().slice(0,10)}`;
+
+    if (format.toLowerCase() === 'json') {
+        const payload = {
+            type: "chasse-single-menuplan",
+            version: 1,
+            data: { name: currentMenuName, plan: plan }
+        };
+        // Utilise la fonction globale qui gère le partage ou le téléchargement
+        triggerDownload(payload, filename);
+
+    } else if (format.toLowerCase() === 'csv') {
+        let csvContent = "date,repas\n"; // En-tête du CSV
+        if (plan.meals && typeof plan.meals === 'object') {
+             for (const date in plan.meals) {
+                // Entoure le repas de guillemets pour gérer les retours à la ligne et les virgules
+                const repas = `"${(plan.meals[date] || '').replace(/"/g, '""')}"`;
+                csvContent += `${date},${repas}\n`;
+            }
+        }
+        const file = new File([csvContent], `${filename}.csv`, { type: 'text/csv;charset=utf-8;' });
+        // Utilise la fonction de téléchargement direct pour le CSV
+        downloadFile(file);
+    } else {
+        showToast("Format non reconnu. Utilisez 'json' ou 'csv'.", "error");
+    }
+}
+
+/**
+ * Ouvre une fenêtre pour importer un plan de repas (JSON ou CSV).
+ */
+function importMenuPlan() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json,.csv';
+    
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const content = await file.text();
+        let planName = file.name.replace(/\.(json|csv)$/, '');
+        let newPlan = { meals: {} };
+
+        try {
+            if (file.name.endsWith('.json')) {
+                const data = JSON.parse(content);
+                if (data.type !== 'chasse-single-menuplan') throw new Error("Type de JSON non valide.");
+                planName = data.data.name;
+                newPlan = data.data.plan;
+            } else if (file.name.endsWith('.csv')) {
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                const header = lines.shift(); // On ignore l'en-tête "date,repas"
+                
+                lines.forEach((line, index) => {
+                    const [date, repas] = line.split(',');
+                    if (index === 0) newPlan.startDate = date; // Le premier jour devient la date de début
+                    newPlan.meals[date] = (repas || '').replace(/"/g, '');
+                });
+                newPlan.numDays = lines.length;
+                
+                const promptedName = prompt("Veuillez nommer ce nouveau plan de repas :", planName);
+                if (!promptedName) return;
+                planName = promptedName;
+            } else {
+                throw new Error("Format de fichier non supporté.");
+            }
+
+            if (allPlans[planName] && !confirm(`Un plan nommé "${planName}" existe déjà. Voulez-vous le remplacer ?`)) {
+                return;
+            }
+
+            allPlans[planName] = newPlan;
+            saveAllPlans();
+            renderAllMenus(); // Rafraîchit la liste des plans
+            showToast(`Le plan "${planName}" a été importé.`, 'ok');
+
+        } catch (err) {
+            showToast("Erreur: Fichier invalide ou corrompu.", "error");
+            console.error("Erreur d'importation de plan:", err);
+        }
+    });
+
+    fileInput.click();
+}
+
+/**
+ * Gère la création des données et le nom du fichier pour tous les types d'export.
+ * Appelle ensuite triggerDownload pour effectuer l'exportation.
+ */
+function handleExport(exportType) {
+    let payload = { version: 1 };
+    let filename = `chasse-export-${exportType}`;
+
+    switch (exportType) {
+        case 'waypoints':
+            payload.type = "chasse-waypoints-only";
+            payload.data = {
+                waypoints: store.get('waypoints', []),
+                camp: store.get(CAMP_KEY, null)
+            };
+            break;
+        case 'permis':
+            payload.type = "chasse-permis";
+            payload.data = {
+                permis: store.get(PERMIS_KEY, [])
+            };
+            break;
+        case 'packlists':
+            payload.type = "chasse-packlists";
+            payload.data = {
+                packLists: store.get(PACK_LISTS_KEY, {})
+            };
+            break;
+        case 'menus':
+            payload.type = "chasse-menus";
+            payload.data = {
+                mealPlans: store.get(PLANS_KEY, {})
+            };
+            break;
+        case 'full':
+            payload.type = "chasse-full-backup";
+            payload.data = {
+                notes: store.get('notes', ''),
+                lat: store.get('lat', ''),
+                lng: store.get('lng', ''),
+                date: store.get('date', ''),
+                waypoints: store.get('waypoints', []),
+                declinaison: store.get('declinaison', '-13'),
+                mealPlans: store.get(PLANS_KEY, {}),
+                packLists: store.get(PACK_LISTS_KEY, {}),
+                journal: store.get(LOG_KEY, []),
+                permis: store.get(PERMIS_KEY, [])
+            };
+            filename = `chasse-sauvegarde-complete`;
+            break;
+        default:
+            showToast("Type d'export inconnu.", "error");
+            return;
+    }
+    
+    triggerDownload(payload, `${filename}-${new Date().toISOString().slice(0,10)}`);
+}
+
+/**
+ * Déclenche le téléchargement ou le partage du fichier de sauvegarde.
+ */
+async function triggerDownload(dataObject, filename) {
+    const file = new File([JSON.stringify(dataObject, null, 2)], `${filename}.json`, { type: 'application/json' });
+
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({ title: 'Exportation Chasse', files: [file] });
+            return;
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                showToast(`Partage impossible: ${error.name}. Tentative de téléchargement...`, 'warn');
+                // En cas d'échec, on lance le téléchargement classique.
+                downloadFile(file);
+            }
+        }
+    } else {
+        // Solution de rechange pour les navigateurs qui ne supportent pas le partage.
+        downloadFile(file);
+    }
+}
+
+/**
+ * Helper function pour forcer le téléchargement d'un fichier.
+ */
+function downloadFile(file) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file);
+    a.download = file.name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    showToast(`Téléchargement de "${file.name}" démarré.`, 'ok');
+}
+
+// --- Fonctions d'appel spécifiques pour les boutons ---
+function exportAllPermis() { handleExport('permis'); }
+function exportWaypoints() {
+    const format = prompt("Exporter en quel format ? (json ou csv)", "csv");
+    if (!format) return;
+
+    const waypointsToExport = store.get('waypoints', []);
+    const campToExport = store.get(CAMP_KEY, null);
+    const filename = `chasse-waypoints-${new Date().toISOString().slice(0,10)}`;
+
+    if (format.toLowerCase() === 'json') {
+        // Exporte en JSON via la fonction handleExport
+        handleExport('waypoints');
+
+    } else if (format.toLowerCase() === 'csv') {
+        let csvContent = "name,latitude,longitude,notes\n"; // En-tête du CSV
+        waypointsToExport.forEach(wp => {
+            // Gère les guillemets et les virgules dans les notes
+            const notes = `"${(wp.notes || '').replace(/"/g, '""')}"`; 
+            csvContent += `${wp.name},${wp.lat},${wp.lng},${notes}\n`;
+        });
+        
+        const file = new File([csvContent], `${filename}.csv`, { type: 'text/csv;charset=utf-8;' });
+        downloadFile(file); // Utilise la fonction de téléchargement direct
+    } else {
+        showToast("Format non reconnu. Utilisez 'json' ou 'csv'.", "error");
+    }
+}
+function exportCurrentPackList() {
+    if (!currentPackListName) {
+        showToast("Veuillez d'abord charger un bloc d'équipement à exporter.", "warn");
+        return;
+    }
+    
+    const format = prompt("Exporter le bloc '"+currentPackListName+"' en quel format ? (json ou csv)", "json");
+    if (!format) return;
+
+    const items = allPackLists[currentPackListName];
+    const cleanName = currentPackListName.replace(/\s/g, '_');
+
+    if (format.toLowerCase() === 'json') {
+        const payload = {
+            type: "chasse-single-packlist",
+            version: 1,
+            data: { name: currentPackListName, items: items }
+        };
+        triggerDownload(payload, `bloc-${cleanName}`);
+    } else if (format.toLowerCase() === 'csv') {
+        const csvContent = items.join('\n');
+        const file = new File([csvContent], `bloc-${cleanName}.csv`, { type: 'text/csv;charset=utf-8;' });
+        downloadFile(file);
+    } else {
+        showToast("Format non reconnu. Utilisez 'json' ou 'csv'.", "error");
+    }
+}
+
+/**
+ * Ouvre une fenêtre pour importer un bloc d'équipement (JSON ou CSV).
+ */
+function importPackList() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json,.csv';
+    
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const content = await file.text();
+        let listName = file.name.replace(/\.(json|csv)$/, ''); // Nom par défaut
+        let items = [];
+
+        try {
+            if (file.name.endsWith('.json')) {
+                const data = JSON.parse(content);
+                if (data.type !== 'chasse-single-packlist') throw new Error("Type de JSON non valide.");
+                listName = data.data.name;
+                items = data.data.items;
+            } else if (file.name.endsWith('.csv')) {
+                items = content.split('\n').map(line => line.trim()).filter(line => line);
+                const promptedName = prompt("Veuillez nommer ce nouveau bloc d'équipement :", listName);
+                if (!promptedName) return; // Annulé par l'utilisateur
+                listName = promptedName;
+            } else {
+                throw new Error("Format de fichier non supporté.");
+            }
+
+            if (allPackLists[listName] && !confirm(`Un bloc nommé "${listName}" existe déjà. Voulez-vous le remplacer ?`)) {
+                return;
+            }
+
+            allPackLists[listName] = items;
+            saveAllPackLists();
+            populatePackListSelector(); // Rafraîchit la liste déroulante
+            showToast(`Le bloc "${listName}" a été importé.`, 'ok');
+
+        } catch (err) {
+            showToast("Erreur: Fichier invalide ou corrompu.", "error");
+            console.error("Erreur d'importation de bloc:", err);
+        }
+    });
+
+    fileInput.click();
+}
+
+
+
+/**
+ * Gère l'importation d'un fichier de waypoints (JSON ou CSV).
+ */
+function importWaypoints() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json,.csv';
+    
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const content = await file.text();
+        let newWaypoints = [];
+        let newCamp = null;
+
+        try {
+            if (file.name.endsWith('.json')) {
+                const data = JSON.parse(content);
+                if (data.type !== "chasse-waypoints-only") throw new Error("Type de JSON non valide.");
+                newWaypoints = data.data.waypoints || [];
+                newCamp = data.data.camp || null;
+
+            } else if (file.name.endsWith('.csv')) {
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                const header = lines.shift().split(','); // On enlève l'en-tête
+                
+                lines.forEach(line => {
+                    const values = line.split(',');
+                    newWaypoints.push({
+                        name: values[0],
+                        lat: values[1],
+                        lng: values[2],
+                        notes: (values[3] || '').replace(/"/g, '') // Nettoie les notes
+                    });
+                });
+            } else {
+                throw new Error("Format de fichier non supporté.");
+            }
+            
+            if (confirm(`Ce fichier contient ${newWaypoints.length} waypoint(s). Voulez-vous les ajouter à votre liste actuelle ? (Les doublons de nom seront ignorés)`)) {
+                const existingNames = new Set(waypoints.map(wp => wp.name));
+                const waypointsToAdd = newWaypoints.filter(wp => wp && wp.name && !existingNames.has(wp.name));
+                
+                waypoints.push(...waypointsToAdd);
+                store.set('waypoints', waypoints);
+                
+                if (newCamp && confirm("Voulez-vous aussi mettre à jour la position du camp ?")) {
+                    store.set(CAMP_KEY, newCamp);
+                }
+
+                showToast(`${waypointsToAdd.length} nouveau(x) waypoint(s) ajouté(s). Rechargement...`, "ok");
+                setTimeout(() => location.reload(), 1500);
+            }
+
+        } catch (err) {
+            showToast("Erreur: Fichier invalide ou corrompu.", "error");
+            console.error("Erreur d'importation de waypoints:", err);
+        }
+    });
+
+    fileInput.click();
+}
+
+// --- FULL BACKUP DANS LE TAB AIDE ---
+function downloadFullBackup() {
+    showToast("Préparation de la sauvegarde complète...", "info");
+    const payload = {
+        type: "chasse-full-backup",
+        version: 1,
+        data: {
+            notes: store.get('notes', ''),
+            lat: store.get('lat', ''),
+            lng: store.get('lng', ''),
+            date: store.get('date', ''),
+            waypoints: store.get('waypoints', []),
+            declinaison: store.get('declinaison', '-13'),
+            mealPlans: store.get(PLANS_KEY, {}),
+            packLists: store.get(PACK_LISTS_KEY, {}),
+            journal: store.get(LOG_KEY, []),
+            permis: store.get(PERMIS_KEY, [])
+        }
+    };
+    triggerDownload(payload, `chasse-sauvegarde-complete-${createFilenameTimestamp()}`);
+}
+/**
+ * Active ou désactive le mode nuit et mémorise le choix.
+ */
+function toggleNightMode() {
+    // Inverse la classe 'night-mode' sur le body
+    const isNight = document.body.classList.toggle('night-mode');
+    
+    // Mémorise le choix dans le localStorage
+    store.set('nightMode', isNight);
+    showToast(isNight ? "Mode nuit activé" : "Mode nuit désactivé", "info");
+}
+
+// --- GESTION DES PERMIS (Nouvelle Version) ---
+
+function loadAllPermis() {
+    allPermis = store.get(PERMIS_KEY, []);
+    renderPermisList();
+}
+
+function saveAllPermis() {
+    store.set(PERMIS_KEY, allPermis);
+}
+
+function renderStaticZoneInfo(zoneKey) {
+    const zoneData = STATIC_ZONES_SUMMARY[zoneKey];
+    if (!zoneData) return '<p class="muted">Aucun résumé disponible pour cette zone.</p>';
+
+    let html = `<h3>${zoneData.title}</h3>`;
+    html += `<p class="small dang" style="font-weight:bold;">NOTE : Résumé à titre indicatif. Vérifiez toujours la réglementation officielle.</p>`;
+
+    zoneData.species.forEach(s => {
+        html += `<h4>${s.name}</h4>`;
+        if (s.note) {
+            html += `<p class="small muted" style="margin-top:-8px;">${s.note}</p>`;
+        }
+        if (s.periods.length > 0) {
+            html += '<ul class="list">';
+            s.periods.forEach(p => {
+                html += `<li><span class="badge">${p.weapon}</span> <span>${p.dates}</span></li>`;
+            });
+            html += '</ul>';
+        }
+    });
+    return html;
+}
+function renderPermisList() {
+    const container = $('#permisListContainer');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (allPermis.length === 0) {
+        container.innerHTML = `<p class="muted">Aucun permis enregistré.</p>`;
+        return;
+    }
+
+    allPermis.forEach(permis => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const hasActivePeriod = permis.validityPeriods && permis.validityPeriods.some(p => {
+            const now = new Date();
+            const debut = new Date(p.debut + 'T00:00:00');
+            const fin = new Date(p.fin + 'T23:59:59');
+            return now >= debut && now <= fin;
+        });
+        const zones = permis.validityPeriods ? [...new Set(permis.validityPeriods.map(p => p.zone))].join(', ') : 'Aucune zone';
+
+        card.innerHTML = `
+            <div class="row" style="justify-content: space-between;">
+                <h3 style="margin:0;">${permis.gibier} ${permis.annee}</h3>
+                <span class="badge ${hasActivePeriod ? 'ok' : 'muted'}">${hasActivePeriod ? 'Actif' : 'Hors-saison'}</span>
+            </div>
+            <p class="small mono muted" style="margin:4px 0;"># ${permis.numero}</p>
+            <div class="small muted">${zones}</div>
+            <div class="hr"></div>
+            <div class="row">
+                <button class="primary small view-permis-btn" data-id="${permis.id}">Voir la copie</button>
+                <button class="secondary small edit-permis-btn" data-id="${permis.id}">Modifier</button>
+                <button class="secondary small danger-btn delete-permis-btn" data-id="${permis.id}">Supprimer</button>
+            </div>
+        `;
+        container.appendChild(card);
+    });
+
+    $$('.view-permis-btn').forEach(btn => btn.addEventListener('click', (e) => viewPermis(e.target.dataset.id)));
+    $$('.edit-permis-btn').forEach(btn => btn.addEventListener('click', (e) => openPermisModal(e.target.dataset.id)));
+    $$('.delete-permis-btn').forEach(btn => btn.addEventListener('click', (e) => deletePermis(e.target.dataset.id)));
+}
+
+function openPermisModal(permisId = null) {
+    const modal = $('#permisModal');
+    const form = $('#permisForm');
+    if (!form || !modal) return;
+    form.reset();
+    $('#permisCurrentFile').textContent = '';
+    tempPeriods = [];
+
+    if (permisId) {
+        const permis = allPermis.find(p => p.id == permisId);
+        if (permis) {
+            $('#permisModalTitle').textContent = 'Modifier un Permis';
+            $('#permisId').value = permis.id;
+            $('#permisGibier').value = permis.gibier;
+            $('#permisAnnee').value = permis.annee;
+            $('#permisNumero').value = permis.numero;
+            if (permis.fileName) {
+                 $('#permisCurrentFile').textContent = `Fichier actuel : ${permis.fileName}`;
+            }
+            tempPeriods = permis.validityPeriods ? [...permis.validityPeriods] : [];
+        }
+    } else {
+        $('#permisModalTitle').textContent = 'Ajouter un Permis';
+        $('#permisId').value = '';
+    }
+    renderTempPeriods();
+    modal.style.display = 'flex';
+}
+
+function closePermisModal() {
+    const modal = $('#permisModal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function savePermisForm() {
+    const id = $('#permisId').value;
+    const fileInput = $('#permisCapture');
+    let fileData = null, fileName = null;
+
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        if (file.size > 4 * 1024 * 1024) { // Limite de 4MB
+            showToast("Le fichier est trop volumineux (max 4 Mo).", "error");
+            return;
+        }
+        fileData = await toBase64(file);
+        fileName = file.name;
+    }
+
+    const permisData = {
+        // 👇 L'ERREUR ÉTAIT ICI. C'est maintenant corrigé.
+        gibier: $('#permisGibier').value,
+        annee: $('#permisAnnee').value,
+        numero: $('#permisNumero').value,
+        validityPeriods: tempPeriods
+    };
+
+    if (!permisData.gibier || !permisData.annee || !permisData.numero) {
+        showToast("Veuillez remplir les champs Gibier, Année et Numéro.", "warn");
+        return;
+    }
+
+    if (id) { // Modification
+        const index = allPermis.findIndex(p => p.id == id);
+        if (index > -1) {
+            allPermis[index] = { ...allPermis[index], ...permisData };
+            if (fileData) {
+                allPermis[index].fileData = fileData;
+                allPermis[index].fileName = fileName;
+            }
+        }
+    } else { // Création
+        permisData.id = Date.now();
+        permisData.fileData = fileData;
+        permisData.fileName = fileName;
+        allPermis.push(permisData);
+    }
+    
+    saveAllPermis();
+    renderPermisList();
+    closePermisModal();
+    showToast("Permis enregistré !", "ok");
+}
+
+function deletePermis(permisId) {
+    if (confirm("Êtes-vous sûr de vouloir supprimer ce permis ?")) {
+        allPermis = allPermis.filter(p => p.id != permisId);
+        saveAllPermis();
+        renderPermisList();
+        showToast("Permis supprimé.", "ok");
+    }
+}
+
+function viewPermis(permisId) {
+    const permis = allPermis.find(p => p.id == permisId);
+    if (permis && permis.fileData) {
+        const newWindow = window.open();
+        if (permis.fileData.startsWith('data:image')) {
+            newWindow.document.write(`<body style="margin:0;"><img src="${permis.fileData}" style="width:100%;"></body>`);
+        } else if (permis.fileData.startsWith('data:application/pdf')) {
+            newWindow.document.write(`<body style="margin:0; height:100vh;"><iframe src="${permis.fileData}" style="width:100%; height:100%; border:none;"></iframe></body>`);
+        } else {
+             newWindow.document.write('Format de fichier non supporté pour l\'aperçu.');
+        }
+    } else {
+        showToast("Aucune copie de permis n'est enregistrée pour cet item.", "warn");
+    }
+}
+
+function addPeriod() {
+    const zone = $('#periodZone').value;
+    const arme = $('#periodArme').value;
+    const debut = $('#periodDebut').value;
+    const fin = $('#periodFin').value;
+
+    if (!zone || !arme || !debut || !fin) {
+        showToast("Veuillez remplir tous les champs de la période.", "warn");
+        return;
+    }
+    tempPeriods.push({ zone, arme, debut, fin });
+    renderTempPeriods();
+    $('#periodZone').value = '';
+    $('#periodDebut').value = '';
+    $('#periodFin').value = '';
+}
+
+function renderTempPeriods() {
+    const container = $('#permisPeriodsList');
+    container.innerHTML = '';
+    if (tempPeriods.length === 0) {
+        container.innerHTML = `<p class="small muted">Aucune période de validité ajoutée.</p>`;
+    }
+    tempPeriods.forEach((period, index) => {
+        const div = document.createElement('div');
+        div.className = 'list-item';
+        div.style.alignItems = 'center';
+        div.innerHTML = `
+            <div style="flex:1;">
+                <strong>${period.zone} / ${period.arme}</strong>
+                <div class="small muted">${period.debut} au ${period.fin}</div>
+            </div>
+            <button type="button" class="secondary small danger-btn" data-index="${index}">X</button>
+        `;
+        div.querySelector('button').addEventListener('click', (e) => {
+            e.preventDefault(); // Ligne de sécurité ajoutée
+            const idxToRemove = e.target.dataset.index;
+            tempPeriods.splice(idxToRemove, 1);
+            renderTempPeriods();
+        });
+        container.appendChild(div);
+    });
+}
+
+const toBase64 = file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+});
+    function submitDomainVote() {
+        const selectedOption = document.querySelector('input[name="domain_vote"]:checked');
+        if (!selectedOption) {
+            showToast("Veuillez sélectionner une option avant de voter.", "warn");
+            return;
+        }
+        const domainChoice = selectedOption.value;
+        const userEmail = "jfzahnen@gmail.com";
+        const subject = "Vote pour le nom de domaine de l'app de chasse";
+        const body = `Salut,\n\nMon vote pour le nom de domaine de l'application est : ${domainChoice}\n\nMerci pour cet outil !\n`;
+        window.location.href = `mailto:${userEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+
+
+function importAllPermis() {
+    // On simule un clic sur l'importateur de fichier principal de l'onglet "Aide"
+    $('#importFile').click();
+}
+    
+    function showToast(message, type = 'info') {
+        const container = $('#toastContainer');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 4000);
+    }
+
+    function calculerTrajectoire() {
+        const velociteInitialeFps = parseFloat($('#balsVelocite').value);
+        const coefBalistique = parseFloat($('#balsCoef').value);
+        const distanceZeroYd = parseFloat($('#balsZero').value);
+        const hauteurMireIn = parseFloat($('#balsHausse').value);
+        if ([velociteInitialeFps, coefBalistique, distanceZeroYd, hauteurMireIn].some(isNaN)) {
+            showToast("Veuillez remplir tous les champs.", "warn");
+            return;
+        }
+        const g = 32.174;
+        const pasDeDistanceYd = 50;
+        const distanceMaxYd = 500;
+        let trajectoire = [];
+        let tempsDeVol = 0;
+        let velociteFps = velociteInitialeFps;
+        for (let distYd = 0; distYd <= distanceMaxYd; distYd += 1) {
+            const dt = 3 / velociteFps;
+            tempsDeVol += dt;
+            const chuteGraviteIn = -0.5 * g * Math.pow(tempsDeVol, 2) * 12;
+            const perteVelo = (velociteFps / 1000) * (distYd / 100) * (1 / coefBalistique) * 0.1;
+            velociteFps -= perteVelo;
+            if (distYd % pasDeDistanceYd === 0) {
+                trajectoire.push({ distance: distYd, chuteBrute: chuteGraviteIn, velocite: Math.round(velociteFps) });
+            }
+        }
+        const pointZero = trajectoire.find(p => p.distance === distanceZeroYd) || { chuteBrute: 0 };
+        const correctionIn = hauteurMireIn - pointZero.chuteBrute;
+        const tableBody = $('#balsResultatsTable tbody');
+        tableBody.innerHTML = '';
+        trajectoire.forEach(point => {
+            const trajectoireCorrigeeIn = point.chuteBrute + correctionIn - (hauteurMireIn * point.distance / distanceZeroYd);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td><b>${point.distance} v</b></td><td style="text-align:right;" class="${trajectoireCorrigeeIn > 0 ? 'ok' : 'error'}">${trajectoireCorrigeeIn.toFixed(1)} po</td><td style="text-align:right;">${point.velocite} pi/s</td>`;
+            tableBody.appendChild(tr);
+        });
+        showToast("Trajectoire calculée.", "ok");
+    }
+
+    async function syncZonesData() {
+        showToast("Synchro des zones...", "info");
+        try {
+            const response = await fetch(ZONES_DATA_URL);
+            if (!response.ok) throw new Error('Fichier non trouvé');
+            const data = await response.json();
+            store.set(ZONES_KEY, { timestamp: Date.now(), data: data });
+            showToast("Données des zones mises à jour.", "ok");
+            return data;
+        } catch (error) {
+            showToast("Synchro impossible (hors-ligne ?). Utilisation du cache.", "warn");
+            const cache = store.get(ZONES_KEY, null);
+            return cache ? cache.data : null;
+        }
+    }
+
+    function buildTabs() {
+        const bar = $('#tabs'); bar.innerHTML = '';
+        TABS.forEach((t, i) => {
+            const b = document.createElement('button');
+            b.textContent = t.label; b.className = i === 0 ? 'active' : '';
+            b.addEventListener('click', () => {
+                $$('#tabs button').forEach(x => x.classList.remove('active'));
+                b.classList.add('active');
+                $$('main section').forEach(s => s.classList.remove('active'));
+                $(`#tab-${t.id}`).classList.add('active');
+                if (t.id === 'check') populateModuleSelector();
+                if (t.id === 'journal') renderJournal();
+            });
+            bar.appendChild(b);
+        });
+    }
+
+function populateZoneSelector() {
+    const select = $('#zoneSelect');
+    if (!select) return;
+
+    // 1. Récupère les zones de notre résumé statique
+    const staticZones = Object.keys(STATIC_ZONES_SUMMARY);
+
+    // 2. Récupère les zones des données synchronisées (si elles existent)
+    const cache = store.get(ZONES_KEY, null);
+    const cachedZones = cache ? Object.keys(cache.data) : [];
+
+    // 3. Fusionne les deux listes et supprime les doublons
+    const allZoneKeys = [...new Set([...staticZones, ...cachedZones])];
+    
+    // 4. Trie la liste finale pour un affichage propre
+    allZoneKeys.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+    // 5. Construit le menu déroulant avec la liste complète
+    select.innerHTML = '<option value="">— Sélectionnez —</option>';
+    allZoneKeys.forEach(zoneKey => {
+        const opt = document.createElement('option');
+        opt.value = zoneKey;
+        opt.textContent = `Zone ${zoneKey}`;
+        select.appendChild(opt);
+    });
+}
+function displayZoneInfo(zone) {
+    const display = $('#zoneInfoDisplay');
+    if (!display) return;
+
+    if (!zone) {
+        display.innerHTML = `<div class="muted">Sélectionnez une zone pour afficher les principales périodes de chasse.</div>`;
+        return;
+    }
+
+    // Si la zone sélectionnée est dans nos résumés, on l'affiche
+    if (STATIC_ZONES_SUMMARY[zone]) {
+        display.innerHTML = renderStaticZoneInfo(zone);
+    } else {
+        // Sinon, on utilise l'ancienne logique avec les données synchronisées
+        const cache = store.get(ZONES_KEY, null);
+        if (!cache) {
+            display.innerHTML = `<div class="muted">Données non disponibles. Synchronisez en ligne via l'onglet "Aide".</div>`;
+            return;
+        }
+        const data = cache.data[zone];
+        if (!data) {
+            display.innerHTML = `<div class="muted">Aucune donnée pour la zone ${zone} dans le cache. Essayez de synchroniser.</div>`;
+            return;
+        }
+        
+        let html = '<h3>Périodes (données synchronisées)</h3><div class="grid cards">';
+        for (const espece in data) {
+            html += `<div class="card"><h4>${espece}</h4><ul class="list">`;
+            data[espece].forEach(permis => {
+                html += `<li><span class="badge">${permis.period}</span> <span>${permis.dates}</span></li>`;
+            });
+            html += '</ul></div>';
+        }
+        html += '</div>';
+        display.innerHTML = html;
+    }
+}
+    function loadJournal() { journal = store.get(LOG_KEY, []); }
+    function saveJournal() { store.set(LOG_KEY, journal); }
+    function renderJournal() { const listEl = $('#logList'); if (!listEl) return; listEl.innerHTML = (journal.length === 0) ? `<div class="muted">Aucune entrée dans le journal.</div>` : ''; [...journal].reverse().forEach(entry => { const div = document.createElement('div'); div.style.borderBottom = '1px dashed #1e293b'; div.style.padding = '8px 0'; const entryDate = new Date(entry.timestamp); const dateString = entryDate.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }); const timeString = entryDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }); let weatherInfo = (entry.weather && entry.weather.direction != null) ? `<span class="chip">🌡️ ${entry.weather.temp}°C   🌬️ ${entry.weather.windSpeed} km/h ${degToArrow(entry.weather.direction)}</span>` : ''; div.innerHTML = `<div class="row" style="justify-content: space-between;"><div><strong>${entry.type}</strong><div class="small muted">${dateString} à ${timeString}</div></div><div class="row">${weatherInfo}<button class="secondary small del-log-btn" data-id="${entry.id}">Suppr.</button></div></div><p class="small" style="margin: 4px 0; white-space: pre-wrap;">${entry.notes}</p><div class="small mono muted">${entry.lat}, ${entry.lng}</div>`; div.querySelector('.del-log-btn').addEventListener('click', (e) => { const entryId = Number(e.target.dataset.id); if (confirm("Supprimer cette entrée du journal ?")) { journal = journal.filter(item => item.id !== entryId); saveJournal(); renderJournal(); showToast("Entrée supprimée.", "ok"); } }); listEl.appendChild(div); }); }
+    function addLogEntry() { const type = $('#selectedLogType').value; const notes = $('#logNotes').value.trim(); if (!type) { showToast("Veuillez d'abord choisir un type d'événement.", "warn"); return; } showToast("Obtention de la position GPS...", "info"); if (!navigator.geolocation) { showToast('Fonction GPS non disponible.', 'error'); return; } navigator.geolocation.getCurrentPosition(pos => { const lat = pos.coords.latitude.toFixed(6); const lng = pos.coords.longitude.toFixed(6); const newEntry = { id: Date.now(), timestamp: Date.now(), type, notes, lat, lng, weather: { temp: currentWind.temp, windSpeed: currentWind.speed, direction: currentWind.direction } }; journal.push(newEntry); saveJournal(); renderJournal(); $('#logNotes').value = ''; $('#selectedLogType').value = ''; $$('.log-type-btn').forEach(btn => btn.classList.replace('primary', 'secondary')); showToast("Entrée ajoutée au journal !", "ok"); }, () => { showToast("ERREUR: Impossible d'obtenir la position GPS.", 'error'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }); }
+    function markEvent() { showToast("Obtention de la position...", "info"); if (!navigator.geolocation) { showToast('GPS non disponible.', 'error'); return; } navigator.geolocation.getCurrentPosition(pos => { const now = new Date(), timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`; const newEvent = { name: `Événement @ ${timeStr}`, lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6), notes: "" }; waypoints.push(newEvent); store.set('waypoints', waypoints); renderWPs(); showToast(`Événement marqué à ${timeStr} !`, 'ok'); }, () => { showToast("Impossible de marquer l'événement : position GPS non obtenue.", 'error'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }); }
+    function sharePosition() { showToast("Obtention de la position pour le partage...", "info"); if (!navigator.geolocation) { showToast('GPS non disponible.', 'error'); return; } navigator.geolocation.getCurrentPosition(pos => { if (!pos || !pos.coords || (pos.coords.latitude === 0 && pos.coords.longitude === 0)) { showToast("ERREUR : Position GPS invalide (0,0). Réessayez dehors.", 'error'); return; } const lat = pos.coords.latitude.toFixed(6), lng = pos.coords.longitude.toFixed(6), timeStr = fmt(new Date()); const message = `Salut, voici ma position actuelle (${timeStr}).\n\nCoordonnées : ${lat}, ${lng}\n\nLien Google Maps :\nhttp://maps.google.com/?q=${lat},${lng}`; window.location.href = `sms:?body=${encodeURIComponent(message)}`; }, () => showToast("Impossible de partager : position GPS non obtenue.", 'error'), { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }); }
+    function sendEmergencySMS() { showToast("Obtention de la position pour le SMS d'urgence...", "warn"); if (!navigator.geolocation) { showToast('GPS non disponible.', 'error'); return; } navigator.geolocation.getCurrentPosition(pos => { if (!pos || !pos.coords || (pos.coords.latitude === 0 && pos.coords.longitude === 0)) { showToast("ERREUR : Position GPS invalide (0,0). Réessayez dehors.", 'error'); return; } const lat = pos.coords.latitude.toFixed(6); const lng = pos.coords.longitude.toFixed(6); const timeStr = fmt(new Date()); if (!confirm("SITUATION D'URGENCE :\n\nPosition obtenue. Voulez-vous VRAIMENT envoyer un SMS de détresse ?")) { showToast("Envoi du message d'urgence annulé.", "info"); return; } const message = `🆘 URGENCE 🆘\n\nJ'ai besoin d'une aide immédiate.\n\nMa dernière position connue (${timeStr}) est :\n${lat}, ${lng}\n\nLien Google Maps :\nhttp://maps.google.com/?q=${lat},${lng}`; window.location.href = `sms:?body=${encodeURIComponent(message)}`; }, () => { showToast("ERREUR : Impossible d'obtenir la position GPS.", 'error'); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }); }
+    function degToArrow(deg) {
+    if (deg == null) return 'N/A';
+    const dirs = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'];
+    return dirs[Math.round(deg / 45) % 8];
+}
+async function fetchWeather() {
+    const lat = parseFloat($('#lat').value),
+          lng = parseFloat($('#lng').value);
+
+    if (isNaN(lat) || isNaN(lng)) {
+        showToast("Latitude/longitude invalides.", 'warn');
+        return;
+    }
+    showToast("Mise à jour de la météo...", "info");
+    try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&hourly=temperature_2m,precipitation_probability,wind_speed_10m,wind_direction_10m&timezone=auto`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Réponse serveur non valide');
+        const data = await response.json();
+        
+        // --- Ligne clé modifiée ---
+        // On enregistre maintenant les coordonnées (lat, lng) avec les données météo
+        store.set(WEATHER_KEY, { timestamp: Date.now(), forecast: data, lat: lat, lng: lng });
+        
+        renderWeather();
+        showToast("Météo mise à jour !", "ok");
+    } catch (error) {
+        showToast("Échec de la mise à jour (hors-ligne ?).", "error");
+    }
+}
+function renderWeather() {
+    const cache = store.get(WEATHER_KEY, null);
+    const out = $('#weatherOut');
+    const statusEl = $('#weatherStatus');
+
+    if (!out) return; // Sécurité si l'élément n'existe pas
+
+    // Réinitialise la variable globale du vent
+    currentWind = { temp: null, speed: null, direction: null };
+
+    // Gère le cas où il n'y a pas de données météo
+    if (!cache || !cache.forecast) {
+        out.innerHTML = `<div class="muted">Aucune donnée météo. Mettez à jour en ligne.</div>`;
+        if (statusEl) statusEl.textContent = '';
+        renderWPs();
+        return;
+    }
+
+    // Affiche le statut de la mise à jour avec l'emplacement
+    const lastUpdate = new Date(cache.timestamp);
+    if (statusEl) {
+        let locationText = cache.lat ? `pour ${cache.lat.toFixed(2)}, ${cache.lng.toFixed(2)}` : '';
+        statusEl.textContent = `Dernière màj ${locationText}: ${lastUpdate.toLocaleDateString()} ${lastUpdate.toLocaleTimeString()}`;
+    }
+
+    // Trouve les données pour l'heure actuelle et met à jour la variable globale
+    const { hourly } = cache.forecast;
+    const nowISO = new Date().toISOString().slice(0, 13);
+    const currentIndex = hourly.time.findIndex(t => t.startsWith(nowISO));
+    if (currentIndex > -1) {
+        currentWind.temp = Math.round(hourly.temperature_2m[currentIndex]);
+        currentWind.speed = Math.round(hourly.wind_speed_10m[currentIndex]);
+        currentWind.direction = hourly.wind_direction_10m[currentIndex];
+    }
+
+    // Construit le HTML pour les 7 jours
+    let html = '';
+    for (let i = 0; i < 7; i++) { // La boucle affiche maintenant 7 jours
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + i);
+        const dateStr = targetDate.toISOString().slice(0, 10);
+
+        let title = '';
+        if (i === 0) {
+            title = "Aujourd'hui";
+        } else if (i === 1) {
+            title = "Demain";
+        } else {
+            // Affiche le nom du jour pour les jours suivants
+            title = targetDate.toLocaleDateString(undefined, { weekday: 'long' });
+        }
+
+        html += `<h4>${title} (${targetDate.toLocaleDateString(undefined, {day: 'numeric', month: 'short'})})</h4>`;
+
+        const timesOfDay = { 'Matin (8h)': 8, 'Midi (13h)': 13, 'Soir (18h)': 18 };
+        let dayHtml = '<div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 8px;">';
+
+        for (const [label, hour] of Object.entries(timesOfDay)) {
+            const index = hourly.time.findIndex(t => t.startsWith(`${dateStr}T${pad(hour)}:`));
+            if (index > -1) {
+                dayHtml += `<div><strong>${label}</strong><div class="small muted">🌡️ ${Math.round(hourly.temperature_2m[index])}°C&nbsp; &nbsp;💧 ${hourly.precipitation_probability[index]}% <br>🌬️ ${Math.round(hourly.wind_speed_10m[index])} km/h ${degToArrow(hourly.wind_direction_10m[index])}</div></div>`;
+            } else {
+                dayHtml += `<div><strong>${label}</strong><div class="small muted">--</div></div>`;
+            }
+        }
+        html += dayHtml + '</div>';
+    }
+    
+    // Met à jour l'interface
+    out.innerHTML = html;
+
+    // Met à jour les waypoints, car 'currentWind' a peut-être changé
+    renderWPs();
+}
+    function renderWPs() {
+    const wrap = $('#wpList'); 
+    if(!wrap) return;
+    wrap.innerHTML = '';
+    const refLat = parseFloat($('#lat').value), refLng = parseFloat($('#lng').value);
+    const haveRef = !(Number.isNaN(refLat) || Number.isNaN(refLng));
+
+    const pointsToRender = isTracking ? currentTrackingSession : waypoints;
+    if(isTracking && pointsToRender.length > 0) {
+        wrap.innerHTML = `<div class="card ok"><h4>Piste en cours (${pointsToRender.length-1} trace(s))</h4></div>`;
+    }
+
+    pointsToRender.forEach((w, idx) => {
+        const div = document.createElement('div');
+        div.className = 'list-item-container';
+        div.style.padding = '8px 0';
+        div.style.borderBottom = '1px dashed #1e293b';
+
+        let detailsHtml = '';
+        // ... (votre logique pour 'detailsHtml' reste la même)
+        if (isTracking && idx > 0) { const prevPoint = pointsToRender[idx - 1]; const distM = haversineKm(prevPoint.lat, prevPoint.lng, w.lat, w.lng) * 1000; const bearing = bearingDeg(prevPoint.lat, prevPoint.lng, w.lat, w.lng); detailsHtml = `<div class="small ok"><b>${distM.toFixed(0)}m</b> vers <b>${bearingToCardinal(bearing)}</b> (depuis ${prevPoint.name})</div>`; } else if (haveRef && !Number.isNaN(parseFloat(w.lat)) && !Number.isNaN(parseFloat(w.lng))) { const km = haversineKm(refLat, refLng, w.lat, w.lng); const br = bearingDeg(refLat, refLng, w.lat, w.lng); detailsHtml = ` · ${km.toFixed(km < 1 ? 2 : 1)} km ${bearingToCardinal(br)}`; if (currentWind.direction != null) { const windBlowsTo = (currentWind.direction + 180) % 360; const diff = Math.min(Math.abs(windBlowsTo - br), 360 - Math.abs(windBlowsTo - br)); let windStatus = 'okay'; if (diff < 45) { windStatus = 'bad'; } else if (diff > 135) { windStatus = 'good'; } detailsHtml += `<span class="wind-indicator ${windStatus}">${degToArrow(currentWind.direction)}</span>`; } }
+
+        // 👇 CHANGEMENT #1 : Le nom du waypoint est maintenant modifiable (`contenteditable`)
+        div.innerHTML = `
+            <div class="row" style="justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <b class="waypoint-name" contenteditable="true" data-idx="${idx}">${w.name}</b> 
+                    <span class="muted mono small">${w.lat}, ${w.lng}</span>
+                    <div class="muted small">${detailsHtml}</div>
+                    <div class="waypoint-notes muted small" style="margin-top:4px; white-space: pre-wrap;">${w.notes || ''}</div>
+                </div>
+                <div class="row">
+                    <button class="secondary small edit-notes-btn" title="Notes">✏️ Notes</button>
+                    <button class="secondary small go" title="Naviguer vers">Aller</button>
+                    <button class="secondary small del" title="Supprimer">Suppr.</button>
+                </div>
+            </div>
+            <div class="waypoint-editor" style="display:none; margin-top: 8px;">
+                <textarea style="width:100%"></textarea>
+                <div class="row" style="margin-top:4px; justify-content:flex-end;">
+                    <button class="secondary small cancel-notes-btn">Annuler</button>
+                    <button class="primary small save-notes-btn">Enregistrer</button>
+                </div>
+            </div>`;
+        
+        // 👇 CHANGEMENT #2 : On ajoute le code pour sauvegarder le nom après modification
+        const nameEl = div.querySelector('.waypoint-name');
+        nameEl.addEventListener('blur', (e) => { // 'blur' est déclenché quand on quitte le champ
+            const newName = e.target.textContent.trim();
+            const originalIndex = e.target.dataset.idx;
+            const originalWaypoint = pointsToRender[originalIndex];
+
+            // Trouve le waypoint correspondant dans la liste principale 'waypoints' pour le modifier
+            const waypointToUpdate = waypoints.find(wp => wp.lat === originalWaypoint.lat && wp.lng === originalWaypoint.lng);
+            if (waypointToUpdate && newName) {
+                waypointToUpdate.name = newName;
+                store.set('waypoints', waypoints);
+                showToast("Waypoint renommé.", "ok");
+                // Pas besoin de rafraîchir tout l'affichage, le nom est déjà changé visuellement.
+            } else {
+                e.target.textContent = originalWaypoint.name; // Annule le changement si le nouveau nom est vide
+            }
+        });
+        
+        // Le reste de vos écouteurs d'événements pour les notes, etc.
+        const editorDiv = div.querySelector('.waypoint-editor'), notesDisplay = div.querySelector('.waypoint-notes'), textarea = editorDiv.querySelector('textarea');
+        div.querySelector('.edit-notes-btn').addEventListener('click', () => { textarea.value = w.notes || ''; editorDiv.style.display = 'block'; });
+        div.querySelector('.cancel-notes-btn').addEventListener('click', () => { editorDiv.style.display = 'none'; });
+        div.querySelector('.save-notes-btn').addEventListener('click', () => { 
+            const waypointIndex = waypoints.findIndex(wp => wp.name === w.name && wp.lat === w.lat);
+            if(waypointIndex > -1) {
+                waypoints[waypointIndex].notes = textarea.value.trim();
+                store.set('waypoints', waypoints);
+                notesDisplay.textContent = waypoints[waypointIndex].notes;
+                editorDiv.style.display = 'none';
+            }
+        });
+        div.querySelector('.del').addEventListener('click', () => { 
+             waypoints = waypoints.filter(wp => !(wp.name === w.name && wp.lat === w.lat));
+             if (isTracking) {
+                currentTrackingSession = currentTrackingSession.filter(wp => !(wp.name === w.name && wp.lat === w.lat));
+             }
+             store.set('waypoints', waypoints);
+             renderWPs(); 
+        });
+        div.querySelector('.go').addEventListener('click', () => { const url = `https://www.google.com/maps?q=${w.lat},${w.lng}`; try { window.open(url, '_blank') } catch { alert(`${w.lat}, ${w.lng}`) } });
+        
+        wrap.appendChild(div);
+    });
+    refreshCampOptions();
+}
+    function sunTimes(dateLocal, lat, lng) { const d = new Date(Date.UTC(dateLocal.getFullYear(), dateLocal.getMonth(), dateLocal.getDate())), J2000 = 2451545, n = Math.round((d / 86400000 + 2440587.5) - J2000 - 0.0009 - lng / 360); function solarNoon(n) { const Jstar = J2000 + n - lng / 360, M = ((357.5291 + 0.98560028 * (Jstar - J2000)) % 360) * Math.PI / 180, C = 1.9148 * Math.sin(M) + 0.0200 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M), lam = ((280.1470 + 0.98564736 * (Jstar - J2000) + C) % 360) * Math.PI / 180; return Jstar + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * lam); } function hourAngle(solarDec, alt) { const latR = lat * Math.PI / 180; return Math.acos((Math.sin(alt) - Math.sin(latR) * Math.sin(solarDec)) / (Math.cos(latR) * Math.cos(solarDec))); } function declination(J) { const M = ((357.5291 + 0.98560028 * (J - J2000)) % 360) * Math.PI / 180, C = 1.9148 * Math.sin(M) + 0.0200 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M), L = ((280.1470 + 0.98564736 * (J - J2000) + C) % 360) * Math.PI / 180, obliq = 23.4397 * Math.PI / 180; return Math.asin(Math.sin(obliq) * Math.sin(L)); } function eventAtAltitude(altDeg) { const Jnoon = solarNoon(n), dec = declination(Jnoon), H = hourAngle(dec, altDeg * Math.PI / 180); return { rise: Jnoon - H / (2 * Math.PI), set: Jnoon + H / (2 * Math.PI), noon: Jnoon }; } function toLocalFromJD(J) { return new Date((J - 2440587.5) * 86400000); } const sun = eventAtAltitude(-0.833), civil = eventAtAltitude(-6), Jnoon = sun.noon, out = { sunrise: toLocalFromJD(sun.rise), sunset: toLocalFromJD(sun.set), civilDawn: toLocalFromJD(civil.rise), civilDusk: toLocalFromJD(civil.set), solarNoon: toLocalFromJD(Jnoon) }; out.goldenAMStart = out.sunrise; out.goldenAMEnd = new Date(out.sunrise.getTime() + 3600000); out.goldenPMStart = new Date(out.sunset.getTime() - 3600000); out.goldenPMEnd = out.sunset; return out; }
+    function getMoonPhase(date = new Date()) { const LUNAR_MONTH = 29.530588853; const getJulianDate = (d) => (d.getTime() / 86400000) - (d.getTimezoneOffset() / 1440) + 2440587.5; const normalize = (v) => v - Math.floor(v); const julianDate = getJulianDate(date); const lunarMonthsSinceKnownNewMoon = normalize((julianDate - 2451550.1) / LUNAR_MONTH); const phaseValue = lunarMonthsSinceKnownNewMoon; const phases = [ { name: "Nouvelle lune", emoji: "🌑" }, { name: "Premier croissant", emoji: "🌒" }, { name: "Premier quartier", emoji: "🌓" }, { name: "Gibbeuse croissante", emoji: "🌔" }, { name: "Pleine lune", emoji: "🌕" }, { name: "Gibbeuse décroissante", emoji: "🌖" }, { name: "Dernier quartier", emoji: "🌗" }, { name: "Dernier croissant", emoji: "🌘" }, ]; const phaseIndex = Math.round(phaseValue * 8) % 8; return phases[phaseIndex]; }
+    function renderSun() { const sunOut = $('#sunOut'); if(!sunOut) return; const lat = parseFloat($('#lat').value), lng = parseFloat($('#lng').value); if (Number.isNaN(lat) || Number.isNaN(lng)) { return; } const d = $('#datePick').value ? new Date($('#datePick').value + 'T12:00:00') : new Date(); const t = sunTimes(d, lat, lng), legalStart = new Date(t.sunrise.getTime() - 1800000), legalEnd = new Date(t.sunset.getTime() + 1800000); const moon = getMoonPhase(d); const rows = [ ['Début légal (–30 min)', legalStart], ['Lever du soleil', t.sunrise], ['Coucher du soleil', t.sunset], ['Fin légale (+30 min)', legalEnd] ]; let sunHtml = rows.map(r => `<div class="pill">${r[0]}</div><div><b>${fmt(r[1])}</b> <span class="muted">(${Intl.DateTimeFormat().resolvedOptions().timeZone})</span></div>`).join(''); let moonHtml = `<div class="pill">Phase lunaire</div><div><b>${moon.name} ${moon.emoji}</b></div>`; sunOut.innerHTML = sunHtml + moonHtml; }
+    function checkPermission() { if (!('permissions' in navigator)) return Promise.resolve(null); return navigator.permissions.query({ name: 'geolocation' }).then(st => st.state).catch(() => null); }
+    function requestGeolocation() { checkPermission().then(state => { if (state === 'denied') { showToast("La géolocalisation est BLOQUÉE.", 'error'); return; } if (!navigator.geolocation) { showToast('GPS non disponible.', 'error'); return; } navigator.geolocation.getCurrentPosition(pos => { $('#lat').value = pos.coords.latitude.toFixed(6); $('#lng').value = pos.coords.longitude.toFixed(6); store.set('lat', $('#lat').value); store.set('lng', $('#lng').value); showToast('Position obtenue.', 'ok'); renderSun(); 
+                    // 👇 LIGNE À AJOUTER : Ouvre le panneau pour montrer les coordonnées 👇
+            $('#location-card')?.classList.add('visible');
+    }, () => showToast("Impossible d'obtenir la position.", 'error'), { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }); }); }
+    function getPresets() { const p = store.get(PRESET_KEY, null); if (p && typeof p === 'object') return p; store.set(PRESET_KEY, PRESET_DEFAULTS); return PRESET_DEFAULTS; }
+    function applyPreset() { const name = $('#presetSelect').value; if (!name) { showToast('Choisis un emplacement.', 'warn'); return; } const p = getPresets()[name]; if (!p || p.lat == null || p.lng == null) { showToast('Aucune coordonnée enregistrée pour ce lieu.', 'warn'); return; } $('#lat').value = String(p.lat); $('#lng').value = String(p.lng); store.set('lat', String(p.lat)); store.set('lng', String(p.lng)); showToast(`Coordonnées appliquées.`, 'ok'); renderSun(); }
+    function savePresetFromFields() { const name = $('#presetSelect').value; if (!name) { showToast('Sélectionne un emplacement.', 'warn'); return; } const lat = parseFloat($('#lat').value), lng = parseFloat($('#lng').value); if (Number.isNaN(lat) || Number.isNaN(lng)) { showToast('Coordonnées invalides.', 'error'); return; } const presets = getPresets(); presets[name] = { lat, lng }; store.set(PRESET_KEY, presets); showToast(`Coordonnées enregistrées pour « ${name} ».`, 'ok'); }
+    function wpSet(lat, lng) { $('#wpLat').value = String(lat); $('#wpLng').value = String(lng); }
+    function wpFromCurrentFields() { const la = parseFloat($('#lat').value), lo = parseFloat($('#lng').value); if (Number.isNaN(la) || Number.isNaN(lo)) { showToast('Renseigne Lat/Lng dans “Emplacement & date”.', 'warn'); return; } wpSet(la, lo); showToast('Coordonnées copiées.', 'ok'); }
+    function wpFromClipboard() { function after(text) { if (!text) return; const m = text.replace('°', '').replace(/\s+/g, '').match(/(-?\d+\.?\d*),\s*(-?\d+\.?\d*)/); if (!m) { showToast('Format invalide. Exemple: 46.123,-71.456', 'error'); return; } wpSet(parseFloat(m[1]), parseFloat(m[2])); showToast('Coordonnées collées dans le waypoint.', 'ok'); } if (navigator.clipboard?.readText) navigator.clipboard.readText().then(after).catch(() => after(prompt('Colle des coordonnées (ex: 46.123,-71.456)'))); else after(prompt('Colle des coordonnées (ex: 46.123,-71.456)')); }
+    function wpFromGPS() { checkPermission().then(st => { if (st === 'denied') { showToast('Permission de localisation refusée.', 'error'); return; } if (!navigator.geolocation) { showToast('GPS non disponible.', 'error'); return; } navigator.geolocation.getCurrentPosition(pos => { wpSet(pos.coords.latitude.toFixed(6), pos.coords.longitude.toFixed(6)); showToast('Position actuelle appliquée au waypoint.', 'ok'); }, err => { const codes = { 1: 'Refus', 2: 'Indispo', 3: 'Timeout' }; showToast(`Erreur GPS (${codes[err.code] || 'Inconnue'}).`, 'error'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }); }); }
+    function toRad(x) { return x * Math.PI / 180 }
+    function toDeg(x) { return x * 180 / Math.PI }
+    function haversineKm(lat1, lon1, lat2, lon2) { const R = 6371, dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1); const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2; return R * 2 * Math.asin(Math.sqrt(a)); }
+    function bearingDeg(lat1, lon1, lat2, lon2) { const φ1 = toRad(lat1), φ2 = toRad(lat2), λ1 = toRad(lon1), λ2 = toRad(lon2); const y = Math.sin(λ2 - λ1) * Math.cos(φ2); const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(λ2 - λ1); return (toDeg(Math.atan2(y, x)) + 360) % 360; }
+    function bearingToCardinal(d) { const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']; return dirs[Math.round(d / 22.5) % 16]; }
+    function refreshCampOptions() { const sel = $('#campSelect'); if (!sel) return; const currentVal = sel.value; sel.innerHTML = '<option value="">— Choisir un waypoint comme camp —</option>'; waypoints.forEach((w, i) => { const opt = document.createElement('option'); opt.value = String(i); opt.textContent = w.name; sel.appendChild(opt); }); sel.value = currentVal; }
+    function onOrient(e) { heading = e.webkitCompassHeading ?? (((360 - e.alpha - ((screen.orientation?.angle ?? window.orientation) || 0)) % 360) || null); renderCompass(); }
+    function renderCompass() { const needle = $('#needle'); if (!needle) return; let lat = currentPos.lat, lng = currentPos.lng; if (lat == null || lng == null || Number.isNaN(lat) || Number.isNaN(lng)) { const la = parseFloat($('#lat').value), lo = parseFloat($('#lng').value); if (!Number.isNaN(la) && !Number.isNaN(lo)) { lat = la; lng = lo; } } if (!camp || lat == null || lng == null) { $('#campAz').textContent = '—'; $('#campDist').textContent = '—'; $('#campDir').textContent = '—'; needle.style.transform = 'translate(-50%, -100%) rotate(0deg)'; return; } const bearing = bearingDeg(lat, lng, camp.lat, camp.lng), distKm = haversineKm(lat, lng, camp.lat, camp.lng), dir = bearingToCardinal(bearing), rel = (heading == null) ? bearing : ((bearing - heading + 360) % 360); needle.style.transform = `translate(-50%, -100%) rotate(${rel}deg)`; const decl = parseFloat($('#declinaison').value) || 0; let azMag = (bearing - decl + 360) % 360; $('#campAz').innerHTML = `Vrai: <b>${Math.round(bearing)}°</b><br>Magn.: <b>${Math.round(azMag)}°</b> <span class="muted">(${decl}°)</span>`; $('#campDist').textContent = (distKm < 1 ? (distKm * 1000).toFixed(0) + ' m' : distKm.toFixed(2) + ' km'); $('#campDir').textContent = dir; }
+    function addTimer(mins) { const end = Date.now() + mins * 60000; const id = Math.random().toString(36).slice(2, 8); timers.push({ id, end, played: false }); const el = document.createElement('div'); el.className = 'card'; el.innerHTML = `<div class="row" style="justify-content:space-between"><b>Minuteur ${mins} min</b> <button class="secondary small">Stop</button></div><div class="mono" id="t-${id}" style="font-size:24px; padding:8px 0;"></div>`; el.querySelector('button').addEventListener('click', () => { el.remove(); const i = timers.findIndex(t => t.id === id); if (i > -1) timers.splice(i, 1); }); $('#timerArea').appendChild(el); }
+    function tick() { const now = Date.now(); timers.forEach(t => { const left = Math.max(0, t.end - now), m = Math.floor(left / 60000), s = Math.floor((left % 60000) / 1000); const el = document.getElementById(`t-${t.id}`); if (!el) return; el.textContent = `${pad(m)}:${pad(s)}`; if (left > 0 && left < 1000 && !t.played) { new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABYAAAABAQAA').play().catch(() => {}); t.played = true; } }); }
+    function populateModuleSelector() { const selector = $('#moduleSelector'); if (!selector) return; selector.innerHTML = ''; const allModules = Object.keys(allPackLists); if (allModules.length === 0) { selector.innerHTML = `<div class="muted">Aucun bloc d'équipement trouvé.</div>`; return; } allModules.forEach(name => { const div = document.createElement('div'); div.className = 'row'; div.innerHTML = `<input type="checkbox" id="mod-${name.replace(/\s/g, '')}" value="${name}" style="width:18px; height:18px;"> <label for="mod-${name.replace(/\s/g, '')}">${name}</label>`; selector.appendChild(div); }); }
+    function loadAllPackLists() { allPackLists = store.get(PACK_LISTS_KEY, { "Base (toutes chasses)": ['Permis / attestation', 'Couteau', 'Anti-odeur', 'Eau + collation', 'Trousse 1ers soins'], "Spécifique Orignal": ['Corne (rattling)', 'Appeau (call)', 'Leurre olfactif'], "Arme : Arbalète": ['Vire-crank', 'Flèches', 'Télémètre', 'Cire pour corde'] }); populatePackListSelector(); updatePackListEditorUI(); }
+    function saveAllPackLists() { store.set(PACK_LISTS_KEY, allPackLists); }
+    function populatePackListSelector() { const select = $('#packListSelect'); if (!select) return; select.innerHTML = '<option value="">— Choisir un bloc —</option>'; Object.keys(allPackLists).forEach(name => { const opt = document.createElement('option'); opt.value = name; opt.textContent = name; select.appendChild(opt); }); }
+    function updatePackListEditorUI() { const container = $('#packListContainer'), hint = $('#packListHint'), title = $('#currentPackListTitle'); if (!container) return; if (currentPackListName) { container.style.display = 'block'; hint.style.display = 'none'; title.textContent = `Bloc : ${currentPackListName}`; } else { container.style.display = 'none'; hint.style.display = 'block'; title.textContent = 'Éditeur de bloc'; } }
+    function renderCurrentPackList() {
+    const ul = $('#listPack');
+    if (!ul) return;
+    ul.innerHTML = '';
+    if (!currentPackListName) return;
+    const items = allPackLists[currentPackListName] || [];
+    items.forEach(itemText => addPackListItem(itemText, false));
+}
+    function addPackListItem(text, save) { if (!currentPackListName) return; const li = document.createElement('li'); li.innerHTML = `<input type="checkbox" style="display:none;"/> <label contenteditable="true">${text}</label> <button class="secondary small">Suppr.</button>`; const saveCurrentList = () => { allPackLists[currentPackListName] = [...ul.querySelectorAll('label')].map(l => l.textContent.trim()); saveAllPackLists(); }; li.querySelector('button').addEventListener('click', () => { li.remove(); saveCurrentList(); }); li.querySelector('label').addEventListener('blur', saveCurrentList); const ul = $('#listPack'); ul.appendChild(li); if (save) { saveCurrentList(); } }
+    function loadAllPlans() { allPlans = store.get(PLANS_KEY, {}); renderAllMenus(); }
+    function saveAllPlans() { store.set(PLANS_KEY, allPlans); }
+    function renderAllMenus() { const listContainer = $('#menuPlanList'); if (!listContainer) return; listContainer.innerHTML = ''; const planNames = Object.keys(allPlans).sort((a, b) => a.localeCompare(b)); if (planNames.length === 0) { listContainer.innerHTML = `<div class="muted">Aucun plan. Créez-en un !</div>`; const editor = $('#menuPlanEditor'); if (editor) editor.style.display = 'none'; return; } planNames.forEach(name => { const div = document.createElement('div'); div.className = 'list-item'; div.textContent = name; if (name === currentMenuName) { div.classList.add('active'); } div.addEventListener('click', () => { currentMenuName = name; renderAllMenus(); displayPlanInEditor(name); }); listContainer.appendChild(div); }); }
+    function displayPlanInEditor(name) { const editor = $('#menuPlanEditor'); if (!editor) return; const plan = allPlans[name]; if (!plan) { editor.style.display = 'none'; return; } editor.style.display = 'block'; $('#menuEditorTitle').textContent = `Édition : ${name}`; $('#menuEditorStartDate').value = plan.startDate || new Date().toISOString().slice(0, 10); $('#menuEditorNumDays').value = plan.numDays || 3; renderMenuDays(); }
+    function renderMenuDays() { if (!currentMenuName) return; const container = $('#menuEditorDaysContainer'); if (!container) return; container.innerHTML = ''; const startDateStr = $('#menuEditorStartDate').value; const numDays = parseInt($('#menuEditorNumDays').value, 10); if (!startDateStr || isNaN(numDays) || numDays < 1) return; const startDate = new Date(startDateStr + 'T12:00:00'); const plan = allPlans[currentMenuName]; for (let i = 0; i < numDays; i++) { const d = new Date(startDate.getTime() + i * 86400000); const dayKey = d.toISOString().slice(0, 10); const dayCard = document.createElement('div'); dayCard.className = 'card'; dayCard.innerHTML = `<h4>${d.toLocaleDateString(undefined, {weekday:'long', day:'numeric', month:'short'})}</h4><textarea data-day-key="${dayKey}" rows="4" style="width:100%;" placeholder="Déjeuner, dîner, souper...">${plan.meals[dayKey] || ''}</textarea>`; dayCard.querySelector('textarea').addEventListener('blur', saveCurrentMenuPlan); container.appendChild(dayCard); } }
+    function saveCurrentMenuPlan() { if (!currentMenuName) return; const plan = allPlans[currentMenuName]; plan.startDate = $('#menuEditorStartDate').value; plan.numDays = parseInt($('#menuEditorNumDays').value, 10); plan.meals = {}; $$('#menuEditorDaysContainer textarea').forEach(textarea => { const dayKey = textarea.dataset.dayKey; if (textarea.value.trim()) { plan.meals[dayKey] = textarea.value.trim(); } }); saveAllPlans(); showToast(`Plan "${currentMenuName}" sauvegardé.`, 'ok'); }
+    function createNewMenuPlan() { const input = $('#menuNewPlanName'); if (!input) return; const name = input.value.trim(); if (!name) { showToast("Veuillez donner un nom au nouveau plan.", 'warn'); return; } if (allPlans[name]) { showToast("Un plan avec ce nom existe déjà.", 'error'); return; } allPlans[name] = { startDate: new Date().toISOString().slice(0, 10), numDays: 3, meals: {} }; currentMenuName = name; saveAllPlans(); renderAllMenus(); displayPlanInEditor(name); input.value = ''; }
+    function deleteCurrentMenuPlan() { if (!currentMenuName) { showToast("Aucun plan sélectionné.", "warn"); return; } if (confirm(`Êtes-vous sûr de vouloir supprimer le plan "${currentMenuName}" ?`)) { delete allPlans[currentMenuName]; const oldName = currentMenuName; currentMenuName = null; saveAllPlans(); renderAllMenus(); showToast(`Plan "${oldName}" supprimé.`, "ok"); } }
+    function loadInitialData() { $('#notes').value = store.get('notes', ''); $('#lat').value = store.get('lat', ''); $('#lng').value = store.get('lng', ''); $('#datePick').value = store.get('date', new Date().toISOString().slice(0, 10)); $('#declinaison').value = store.get('declinaison', '-13'); waypoints = store.get('waypoints', []); }
+    function updateBadge() { const ok = !navigator.onLine || (navigator.serviceWorker && navigator.serviceWorker.controller); const el = $('#offlineBadge'); if (!el) return; el.textContent = ok ? '✅ Cache hors-ligne prêt' : '⏳ Préparation du cache...'; el.style.color = ok ? 'var(--ok)' : 'var(--warn)'; }
+    function startTracking() { if (!confirm("Démarrer une nouvelle session de recherche ? Assurez-vous d'être au point de tir initial.")) { return; } isTracking = true; currentTrackingSession = []; navigator.geolocation.getCurrentPosition(pos => { const firstPoint = { name: "Point de Tir", lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6), notes: `Début recherche: ${new Date().toLocaleTimeString()}` }; currentTrackingSession.push(firstPoint); waypoints.push(firstPoint); store.set('waypoints', waypoints); $('#start-tracking-div').style.display = 'none'; $('#active-tracking-div').style.display = 'block'; showToast("Mode Recherche activé. Point de tir enregistré.", "ok"); renderWPs(); }, () => showToast("Erreur GPS. Impossible de démarrer la recherche.", "error"), { enableHighAccuracy: true }); }
+    function markTrace() { showToast("Enregistrement de la trace...", "info"); navigator.geolocation.getCurrentPosition(pos => { const tracePoint = { name: `Trace #${currentTrackingSession.length}`, lat: pos.coords.latitude.toFixed(6), lng: pos.coords.longitude.toFixed(6), notes: "" }; currentTrackingSession.push(tracePoint); waypoints.push(tracePoint); store.set('waypoints', waypoints); showToast(`Trace #${currentTrackingSession.length - 1} marquée !`, "ok"); renderWPs(); }, () => showToast("Erreur GPS. Trace non enregistrée.", "error"), { enableHighAccuracy: true }); }
+    function stopTracking() { isTracking = false; $('#start-tracking-div').style.display = 'block'; $('#active-tracking-div').style.display = 'none'; showToast("Mode Recherche terminé. Vos points sont sauvegardés.", "ok"); renderWPs(); }
+    /**
+    * Crée un horodatage sécuritaire pour les noms de fichiers (YYYY-MM-DD_HH-MM-SS).
+    */
+function createFilenameTimestamp() {
+    const d = new Date();
+    const datePart = d.toISOString().slice(0, 10); // "YYYY-MM-DD"
+    const timePart = `${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`; // "HH-MM-SS"
+    return `${datePart}_${timePart}`;
+}
+
+    // === MODE TERRAIN (4x4) ===
+    let mode4x4WatchId = null;
+    let mode4x4Pos     = null;
+    let mode4x4Route   = [];
+    let m4WakeLock     = null;
+
+    async function enter4x4Mode() {
+        mode4x4Route = [];
+        $('#mode4x4Overlay').style.display = 'flex';
+        render4x4Route();
+        update4x4Wind();
+
+        // Wake Lock : empêche l'écran de se verrouiller
+        if ('wakeLock' in navigator) {
+            navigator.wakeLock.request('screen')
+                .then(lock => { m4WakeLock = lock; })
+                .catch(() => {});
+        }
+
+        // GPS continu
+        if (navigator.geolocation) {
+            mode4x4WatchId = navigator.geolocation.watchPosition(
+                pos => { mode4x4Pos = pos; update4x4Display(); },
+                ()  => showToast('Signal GPS faible.', 'warn'),
+                { enableHighAccuracy: true, maximumAge: 3000 }
+            );
+        } else {
+            showToast('GPS non disponible sur cet appareil.', 'error');
+        }
+    }
+
+    function exit4x4Mode() {
+        $('#mode4x4Overlay').style.display = 'none';
+        if (mode4x4WatchId != null) {
+            navigator.geolocation.clearWatch(mode4x4WatchId);
+            mode4x4WatchId = null;
+        }
+        if (m4WakeLock) { m4WakeLock.release(); m4WakeLock = null; }
+        renderWPs(); // synchronise les waypoints dans l'onglet principal
+    }
+
+    function mark4x4Point() {
+        if (!mode4x4Pos) { showToast('Attente du signal GPS…', 'warn'); return; }
+        const lat  = mode4x4Pos.coords.latitude.toFixed(6);
+        const lng  = mode4x4Pos.coords.longitude.toFixed(6);
+        const num  = mode4x4Route.length;
+        const name = num === 0 ? '🏕️ Départ 4x4' : `📍 Pt.${num}`;
+        const pt   = { name, lat, lng, notes: `Mode 4x4 — ${new Date().toLocaleTimeString()}` };
+        mode4x4Route.push(pt);
+        waypoints.push(pt);
+        store.set('waypoints', waypoints);
+        if (navigator.vibrate) navigator.vibrate([80, 30, 80]);
+        showToast(`${name} marqué !`, 'ok');
+        render4x4Route();
+    }
+
+    function update4x4Display() {
+        if (!mode4x4Pos) return;
+        const { latitude, longitude, accuracy } = mode4x4Pos.coords;
+        $('#m4-coords').textContent    = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        $('#m4-accuracy').textContent  = `Précision : ±${Math.round(accuracy)} m`;
+
+        if (camp) {
+            const bearing = bearingDeg(latitude, longitude, camp.lat, camp.lng);
+            const dist    = haversineKm(latitude, longitude, camp.lat, camp.lng);
+            $('#m4-camp-bearing').textContent = `${bearingToCardinal(bearing)} ${Math.round(bearing)}°`;
+            $('#m4-camp-dist').textContent    = dist < 1 ? `${(dist * 1000).toFixed(0)} m` : `${dist.toFixed(2)} km`;
+        } else {
+            $('#m4-camp-bearing').textContent = 'Pas de camp';
+            $('#m4-camp-dist').textContent    = 'Définissez-le d\'abord';
+        }
+    }
+
+    function update4x4Wind() {
+        if (currentWind.direction != null) {
+            $('#m4-wind-dir').textContent   = `${degToArrow(currentWind.direction)} ${bearingToCardinal(currentWind.direction)}`;
+            $('#m4-wind-speed').textContent = `${currentWind.speed} km/h · ${currentWind.temp}°C`;
+        } else {
+            $('#m4-wind-dir').textContent   = '—';
+            $('#m4-wind-speed').textContent = 'Mettez à jour la météo';
+        }
+    }
+
+    function render4x4Route() {
+        const list    = $('#m4-route-list');
+        const countEl = $('#m4-count');
+        const totalEl = $('#m4-total-dist');
+        const n       = mode4x4Route.length;
+        countEl.textContent = `${n} pt${n > 1 ? 's' : ''}`;
+
+        if (!n) {
+            list.innerHTML   = '<div class="m4-hint-sm" style="padding:8px 0;">Appuyez sur "MARQUER ICI" pour enregistrer votre premier point.</div>';
+            totalEl.textContent = '';
+            return;
+        }
+
+        let totalKm = 0;
+        const rows = [...mode4x4Route].reverse().map((pt, ri) => {
+            const idx = n - 1 - ri;
+            let distHtml = '';
+            if (idx > 0) {
+                const prev = mode4x4Route[idx - 1];
+                const d    = haversineKm(parseFloat(prev.lat), parseFloat(prev.lng), parseFloat(pt.lat), parseFloat(pt.lng));
+                const br   = bearingDeg(parseFloat(prev.lat), parseFloat(prev.lng), parseFloat(pt.lat), parseFloat(pt.lng));
+                distHtml   = `<span class="m4-route-dist">${d < 0.1 ? (d*1000).toFixed(0)+'m' : d.toFixed(2)+'km'} ${bearingToCardinal(br)}</span>`;
+            }
+            return `<div class="m4-route-item"><span class="m4-route-name">${pt.name}</span>${distHtml}</div>`;
+        });
+
+        for (let i = 1; i < n; i++) {
+            totalKm += haversineKm(
+                parseFloat(mode4x4Route[i-1].lat), parseFloat(mode4x4Route[i-1].lng),
+                parseFloat(mode4x4Route[i].lat),   parseFloat(mode4x4Route[i].lng)
+            );
+        }
+
+        list.innerHTML      = rows.join('');
+        totalEl.textContent = n > 1 ? `Distance totale : ${totalKm < 1 ? (totalKm*1000).toFixed(0)+'m' : totalKm.toFixed(2)+'km'}` : '';
+    }
+
+    function init() {
+        buildTabs();
+        loadInitialData();
+        loadAllPackLists();
+        loadAllPlans();
+        loadAllPermis();
+        loadJournal();
+        const _zoneCache = store.get(ZONES_KEY, null);
+        if (_zoneCache && (Date.now() - _zoneCache.timestamp < 6 * 3600 * 1000)) {
+            populateZoneSelector();
+        } else {
+            syncZonesData().then(() => { populateZoneSelector(); });
+        }
+        renderWPs();
+        renderSun();
+        renderWeather();
+        refreshCampOptions();
+        if (camp) renderCompass();
+        setInterval(tick, 1000);
+        updateBadge();
+        setInterval(updateBadge, 5000);
+        if (store.get('nightMode', false)) {
+        document.body.classList.add('night-mode');
+    }
+        
+        $$('.collapsible-header').forEach(header => {
+            header.addEventListener('click', () => {
+                header.parentElement.classList.toggle('visible');
+            });
+        });
+        document.querySelectorAll('#actions-card, #sun-card, #weather-card').forEach(card => {
+            if (card) card.classList.add('visible');
+        });
+        
+$('#saveBtn')?.addEventListener('click', () => { 
+    const payload = { 
+        type: "chasse-full-backup", 
+        version: 1, 
+        data: { 
+            notes: store.get('notes', ''),
+            lat: store.get('lat', ''),
+            lng: store.get('lng', ''),
+            date: store.get('date', ''),
+            waypoints: store.get('waypoints', []),
+            declinaison: store.get('declinaison', '-13'),
+            mealPlans: store.get(PLANS_KEY, {}),
+            packLists: store.get(PACK_LISTS_KEY, {}),
+            journal: store.get(LOG_KEY, []),
+            permis: store.get(PERMIS_KEY, []) // <-- LIGNE AJOUTÉE
+        } 
+    }; 
+    triggerDownload(payload, `chasse-export-total-${new Date().toISOString().slice(0,10)}`); 
+});
+$('#importFile')?.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+        const data = JSON.parse(await file.text());
+        if (!data.type || !data.version) {
+            showToast('Fichier invalide ou format non supporté.', 'error');
+            return;
+        }
+
+switch (data.type) {
+    case "chasse-full-backup":
+        if (confirm("Ce fichier est une sauvegarde complète. Remplacer toutes vos données ?")) {
+            const d = data.data;
+            store.set('notes', d.notes || '');
+            store.set('lat', d.lat || '');
+            store.set('lng', d.lng || '');
+            store.set('date', d.date || '');
+            store.set('waypoints', d.waypoints || []);
+            store.set('declinaison', d.declinaison || '-13');
+            store.set(PLANS_KEY, d.mealPlans || {});
+            store.set(PACK_LISTS_KEY, d.packLists || {});
+            store.set(LOG_KEY, d.journal || []);
+            store.set(PERMIS_KEY, d.permis || []);
+            showToast("Restauration complète réussie. Rechargement...", "ok");
+            setTimeout(() => location.reload(), 1500);
+        }
+        break;
+    
+    case "chasse-waypoints":
+        if (confirm("Importer ces waypoints et cette position de camp ?")) {
+            store.set('waypoints', data.data.waypoints || []);
+            store.set(CAMP_KEY, data.data.camp || null);
+            showToast("Waypoints importés. Rechargement...", "ok");
+            setTimeout(() => location.reload(), 1500);
+        }
+        break;
+
+    case "chasse-permis":
+        if (confirm("Remplacer tous vos permis par ceux de ce fichier ?")) {
+            store.set(PERMIS_KEY, data.data.permis || []);
+            showToast("Permis importés. Rechargement...", "ok");
+            setTimeout(() => location.reload(), 1500);
+        }
+        break;
+
+    case "chasse-packlists":
+        if (confirm("Remplacer toutes vos listes d'équipement par celles de ce fichier ?")) {
+            store.set(PACK_LISTS_KEY, data.data.packLists || {});
+            showToast("Listes d'équipement importées. Rechargement...", "ok");
+            setTimeout(() => location.reload(), 1500);
+        }
+        break;
+        
+    case "chasse-menus":
+        if (confirm("Remplacer tous vos plans de repas par ceux de ce fichier ?")) {
+            store.set(PLANS_KEY, data.data.mealPlans || {});
+            showToast("Plans de repas importés. Rechargement...", "ok");
+            setTimeout(() => location.reload(), 1500);
+        }
+        break;
+
+    case "chasse-single-menuplan": { // <-- ACCOLADE OUVRANTE AJOUTÉE
+        const { name, plan } = data.data;
+        if (allPlans[name] && !confirm(`Le fichier contient un plan de repas nommé "${name}" qui existe déjà. Le remplacer ?`)) {
+            break; // Utilisez break au lieu de return
+        }
+        allPlans[name] = plan;
+        saveAllPlans();
+        renderAllMenus();
+        showToast(`Le plan de repas "${name}" a été importé.`, 'ok');
+        break;
+    } // <-- ACCOLADE FERMANTE AJOUTÉE
+    
+    case "chasse-single-packlist": { // <-- ACCOLADE OUVRANTE AJOUTÉE
+        const { name, items } = data.data; // Maintenant, 'name' peut être redéclaré sans conflit
+        if (allPackLists[name] && !confirm(`Le fichier contient un bloc d'équipement nommé "${name}" qui existe déjà. Voulez-vous le remplacer ?`)) {
+            break; // Utilisez break au lieu de return
+        }
+        allPackLists[name] = items;
+        saveAllPackLists();
+        populatePackListSelector();
+        showToast(`Le bloc d'équipement "${name}" a été importé.`, 'ok');
+        break;
+    } // <-- ACCOLADE FERMANTE AJOUTÉE
+
+    default:
+        showToast('Type de fichier inconnu ou non supporté.', 'warn');
+}
+    } catch (err) {
+        showToast('Erreur: Fichier invalide ou corrompu.', 'error');
+        console.error("Erreur d'importation:", err);
+    }
+    
+    e.target.value = ''; // Réinitialise le champ pour permettre la sélection du même fichier à nouveau
+});
+        $('#resetBtn')?.addEventListener('click', () => { if (confirm('Réinitialiser TOUTES les données (blocs, waypoints, notes, menus, etc.) ?')) { [ 'notes', 'lat', 'lng', 'date', 'waypoints', 'chasseCamp', 'declinaison', PLANS_KEY, PACK_LISTS_KEY, LOG_KEY, 'chassePresets' ].forEach(k => localStorage.removeItem(k)); location.reload(); } });
+        // Boutons d'exportation modulaire (Waypoints, Permis, etc.)
+        $$('.export-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+             handleExport(e.currentTarget.dataset.exportType);
+            });
+        });
+
+        // Bouton pour la sauvegarde complète
+        $('#downloadFullBackupBtn')?.addEventListener('click', downloadFullBackup);
+
+        // Bouton principal d'importation
+        $('#importBtn')?.addEventListener('click', () => $('#importFile').click());
+        $('#exportWpBtn')?.addEventListener('click', exportWaypoints);
+        $('#importWpBtn')?.addEventListener('click', importWaypoints);
+        $('#printBtn')?.addEventListener('click', () => window.print());
+        $('#emergencyBtn')?.addEventListener('click', sendEmergencySMS);
+        $('#geoBtn')?.addEventListener('click', requestGeolocation);
+        $('#markEventBtn')?.addEventListener('click', markEvent);
+        $('#sharePosBtn')?.addEventListener('click', sharePosition);
+        $('#updateWeatherBtn')?.addEventListener('click', fetchWeather);
+        $('#startTrackingBtn')?.addEventListener('click', startTracking);
+        $('#markTraceBtn')?.addEventListener('click', markTrace);
+        $('#stopTrackingBtn')?.addEventListener('click', stopTracking);
+        $('#nightModeToggle')?.addEventListener('click', toggleNightMode);
+        $('#mode4x4Btn')?.addEventListener('click', enter4x4Mode);
+        $('#m4-markBtn')?.addEventListener('click', mark4x4Point);
+        $('#m4-emergencyBtn')?.addEventListener('click', sendEmergencySMS);
+        $('#m4-exitBtn')?.addEventListener('click', exit4x4Mode);
+        $('#pasteCoordBtn')?.addEventListener('click', () => { function after(text) { if (!text) return; const parts = text.replace('°', '').replace(/\s+/g, '').split(','); if (parts.length !== 2) { showToast('Format invalide.', 'error'); return; } const la = parseFloat(parts[0]), lo = parseFloat(parts[1]); if (isNaN(la) || isNaN(lo)) { showToast('Coordonnées non numériques.', 'error'); return; } $('#lat').value = la; $('#lng').value = lo; store.set('lat', String(la)); store.set('lng', String(lo)); showToast('Coordonnées collées.', 'ok'); renderSun(); } if (navigator.clipboard?.readText) { navigator.clipboard.readText().then(after).catch(() => after(prompt('Colle des coordonnées (ex: 46.123,-71.456)'))); } else { after(prompt('Colle des coordonnées (ex: 46.123,-71.456)')); } });
+        $('#permBtn')?.addEventListener('click', () => { checkPermission().then(st => { if (st === null) { showToast("Impossible de lire l'état de permission.", 'warn'); return; } const map = { granted: 'Autorisée', prompt: 'Doit demander', denied: 'Refusée' }; showToast('Autorisation géolocalisation: ' + (map[st] || st)); if (st === 'prompt') { requestGeolocation(); } }); });
+        $('#presetApply')?.addEventListener('click', applyPreset);
+        $('#presetSave')?.addEventListener('click', savePresetFromFields);
+        $('#wpAdd')?.addEventListener('click', () => { const name = $('#wpName').value.trim(), lat = $('#wpLat').value.trim(), lng = $('#wpLng').value.trim(); if (!name || !lat || !lng) { showToast('Nom ou coordonnées du waypoint manquants.','warn'); return; } waypoints.push({ name, lat, lng, notes: '' }); store.set('waypoints', waypoints); renderWPs(); $('#wpName').value = ''; $('#wpLat').value = ''; $('#wpLng').value = ''; });
+        $('#wpFromGPS')?.addEventListener('click', wpFromGPS);
+        $('#campUseWp')?.addEventListener('click', () => { const idx = $('#campSelect').value ? parseInt($('#campSelect').value, 10) : -1; if (idx < 0 || !waypoints[idx]) { showToast('Choisis un waypoint.', 'warn'); return; } const w = waypoints[idx]; camp = { lat: parseFloat(w.lat), lng: parseFloat(w.lng) }; store.set(CAMP_KEY, camp); showToast(`Camp défini sur « ${w.name} ».`, 'ok'); renderCompass(); });
+        $('#campUseFields')?.addEventListener('click', () => { const la = parseFloat($('#lat').value), lo = parseFloat($('#lng').value); if (Number.isNaN(la) || Number.isNaN(lo)) { showToast('Renseigne Lat/Lng.', 'warn'); return; } camp = { lat: la, lng: lo }; store.set(CAMP_KEY, camp); showToast(`Camp défini sur l’emplacement courant.`, 'ok'); renderCompass(); });
+        $('#campTrack')?.addEventListener('click', (e) => { const btn = e.currentTarget; if (watchId != null) { navigator.geolocation.clearWatch(watchId); watchId = null; btn.textContent = 'Suivi GPS : OFF'; showToast('Suivi GPS désactivé.'); } else { if (!navigator.geolocation) { showToast('GPS non disponible.', 'error'); return; } watchId = navigator.geolocation.watchPosition(pos => { currentPos.lat = pos.coords.latitude; currentPos.lng = pos.coords.longitude; renderCompass(); }, err => { const codes = { 1: 'Refus', 2: 'Indispo', 3: 'Timeout' }; showToast(`Erreur GPS: ${codes[err.code] || 'Inconnue'}`, 'error'); }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 }); btn.textContent = 'Suivi GPS : ON'; showToast('Suivi GPS activé.'); } });
+        $('#campOrient')?.addEventListener('click', async () => { try { if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') { const resp = await DeviceOrientationEvent.requestPermission(); if (resp !== 'granted') { showToast('Permission boussole refusée.', 'error'); return; } } window.addEventListener('deviceorientation', onOrient, true); showToast('Boussole activée.'); } catch (e) { window.addEventListener('deviceorientation', onOrient, true); showToast('Boussole activée (sans permission explicite).'); } });
+        $$('.timerBtn').forEach(b => b.addEventListener('click', () => addTimer(+b.dataset.mins)));
+        $('#generateChecklistBtn')?.addEventListener('click', () => { const ul = $('#activeChecklist'); ul.innerHTML = ''; const selectedModules = $$('#moduleSelector input:checked').map(input => input.value); if (selectedModules.length === 0) { ul.innerHTML = `<li class="muted">Aucun bloc sélectionné.</li>`; return; } const allItems = new Set(); selectedModules.forEach(moduleName => { const items = allPackLists[moduleName] || []; items.forEach(item => allItems.add(JSON.stringify({ item: item, module: moduleName }))); }); if (allItems.size === 0) { ul.innerHTML = `<li class="muted">Les blocs sélectionnés sont vides.</li>`; return; } [...allItems].map(i => JSON.parse(i)).forEach(({ item, module }) => { const li = document.createElement('li'); li.innerHTML = `<input type="checkbox" style="width:18px; height:18px; margin-top:3px;"> <label>${item}</label> <span class="chip">${module}</span>`; li.querySelector('input').addEventListener('change', (e) => { li.style.opacity = e.target.checked ? 0.5 : 1; }); ul.appendChild(li); }); });
+        $('#packListCreate')?.addEventListener('click', () => { const input = $('#packListNewName'), name = input.value.trim(); if (!name) { alert('Veuillez donner un nom au nouveau bloc.'); return; } if (allPackLists[name]) { alert('Un bloc avec ce nom existe déjà.'); return; } allPackLists[name] = []; currentPackListName = name; saveAllPackLists(); populatePackListSelector(); $('#packListSelect').value = name; input.value = ''; renderCurrentPackList(); updatePackListEditorUI(); });
+        $('#packListLoad')?.addEventListener('click', () => {
+    const name = $('#packListSelect').value;
+    if (!name) {
+        showToast('Veuillez sélectionner un bloc à charger.', 'warn'); 
+        return; 
+    }
+    currentPackListName = name;
+    renderCurrentPackList();
+    updatePackListEditorUI();
+});
+        $('#packListDelete')?.addEventListener('click', () => { const name = $('#packListSelect').value; if (!name) { alert('Veuillez sélectionner un bloc à supprimer.'); return; } if (confirm(`Êtes-vous sûr de vouloir supprimer le bloc "${name}" ?`)) { delete allPackLists[name]; if (currentPackListName === name) { currentPackListName = null; $('#listPack').innerHTML = ''; } saveAllPackLists(); populatePackListSelector(); updatePackListEditorUI(); } });
+        $('#addPackItemBtn')?.addEventListener('click', () => { const input = $('#addPackTxt'); const value = input.value.trim(); if (value) { addPackListItem(value, true); input.value = ''; } });
+        $('#menuCreatePlanBtn')?.addEventListener('click', createNewMenuPlan);
+        $('#menuDeletePlanBtn')?.addEventListener('click', deleteCurrentMenuPlan);
+        $('#exportMenuPlanBtn')?.addEventListener('click', exportCurrentMenuPlan);
+        $('#importMenuPlanBtn')?.addEventListener('click', importMenuPlan);
+        $('#menuEditorStartDate').addEventListener('change', () => { saveCurrentMenuPlan(); renderMenuDays(); });
+        $('#menuEditorNumDays').addEventListener('change', () => { saveCurrentMenuPlan(); renderMenuDays(); });
+        $$('.log-type-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const selectedType = e.currentTarget.dataset.type;
+                $('#selectedLogType').value = selectedType;
+                $$('.log-type-btn').forEach(btn => btn.classList.replace('primary', 'secondary'));
+                e.currentTarget.classList.replace('secondary', 'primary');
+            });
+        });
+            // TAB: PERMIS
+        $('#addPermisBtn')?.addEventListener('click', () => openPermisModal());
+        $('#permisSaveBtn')?.addEventListener('click', savePermisForm);
+        $('#permisCancelBtn')?.addEventListener('click', closePermisModal);
+        $('#addPeriodBtn')?.addEventListener('click', addPeriod);
+        $('#logAddBtn')?.addEventListener('click', addLogEntry);
+        $('#zoneSelect')?.addEventListener('change', (e) => displayZoneInfo(e.target.value));
+        $('#balsCalculerBtn')?.addEventListener('click', calculerTrajectoire);
+        $('#submitVoteBtn')?.addEventListener('click', submitDomainVote);
+        $('#syncBtn')?.addEventListener('click', syncZonesData);
+        $('#exportPackListBtn')?.addEventListener('click', exportCurrentPackList);
+        $('#importPackListBtn')?.addEventListener('click', importPackList);
+        $('#exportPermisBtn')?.addEventListener('click', exportAllPermis);
+        $('#importPermisBtn')?.addEventListener('click', importAllPermis);
+        
+    }
+
+    init();
+
+</script>
+<script>
+  // Register Service Worker (optional but recommended)
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/Chasse/sw.js').catch(console.error);
+  }
+</script>
+<div id="toastContainer"></div>
+</body>
+</html>

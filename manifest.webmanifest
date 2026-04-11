@@ -1,0 +1,9 @@
+{
+  "name": "Chasse — Tableau de bord",
+  "short_name": "Chasse",
+  "start_url": "/Chasse/chasse.html",
+  "display": "standalone",
+  "background_color": "#0b1222",
+  "theme_color": "#0f172a",
+  "icons": []
+}

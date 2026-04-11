@@ -1,0 +1,37 @@
+{
+    "1": {
+        "Orignal": [
+            { "period": "Arc/Arbalète", "dates": "27 sept. au 12 oct." },
+            { "period": "Arme à feu", "dates": "18 oct. au 2 nov." }
+        ],
+        "Ours Noir": [
+            { "period": "Printemps", "dates": "15 mai au 30 juin" }
+        ]
+    },
+    "2": {
+        "Orignal": [
+            { "period": "Arc/Arbalète", "dates": "27 sept. au 12 oct." },
+            { "period": "Arme à feu", "dates": "18 oct. au 2 nov." }
+        ],
+        "Ours Noir": [
+            { "period": "Printemps", "dates": "15 mai au 30 juin" }
+        ],
+        "Chevreuil": [
+            { "period": "Arc/Arbalète", "dates": "27 sept. au 12 oct." },
+            { "period": "Arme à feu", "dates": "8 nov. au 23 nov." }
+        ]
+    },
+    "27 Ouest": {
+        "Orignal": [
+            { "period": "Arc/Arbalète", "dates": "4 oct. au 12 oct." },
+            { "period": "Arme à feu", "dates": "18 oct. au 26 oct." }
+        ],
+        "Chevreuil": [
+            { "period": "Arc/Arbalète", "dates": "27 sept. au 12 oct." },
+            { "period": "Arme à feu", "dates": "8 nov. au 16 nov." }
+        ],
+        "Dindon Sauvage": [
+            { "period": "Printemps", "dates": "29 avril au 10 mai" }
+        ]
+    }
+}
