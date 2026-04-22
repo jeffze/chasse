@@ -91,5 +91,152 @@ The app supports per-section JSON export/import and a full backup (`downloadFull
 ## Important Notes
 
 - **No network required** after first load — all features work offline
-- Dates in `zones.json` reflect Quebec 2025 hunting seasons; update annually
+- Dates in `zones.json` reflect Quebec **2026** hunting seasons (règlement en vigueur 2026-04-01 au 2028-03-31) ; update annually
 - `Chassetest.html` is a scratch pad — do not treat it as the source of truth; `chasse.html` is canonical
+
+---
+
+# Vision commerciale (draft 2026-04-22)
+
+## Objectif
+
+Transformer Chasse en **SaaS multi-pays, multilingue, sur abonnement mensuel/annuel**. Cible initiale : chasseurs Québec → Canada → USA → Europe.
+
+## Marché adressable
+
+| Pays | Chasseurs | Marché potentiel (1% conversion) |
+|---|---|---|
+| Canada | ~1,3 M | 13 000 |
+| USA | ~15 M | 150 000 |
+| France | ~1 M | 10 000 |
+| Belgique / Suisse / Espagne | ~1 M | 10 000 |
+| **Total adressable** | **~18 M** | **~180 000 abonnés potentiels** |
+
+**Concurrents** : OnX Hunt (30–100 USD/an), HuntStand (~70 USD/an), HuntWise, GoWild. Marché mature, éduqué aux abonnements.
+
+## Structure 3 paliers
+
+### Gratuit (acquisition)
+- 1 pays/région au choix
+- Checklist, menus basiques, journal simple
+- Zones en consultation seule
+- Pas de sync, pas de carte offline
+- Pub discrète
+
+### Premium — 4,99 $/mois ou 39 $/an
+- **Tous les pays/régions**
+- Sync cross-device
+- Téléchargement « Préparer pour le terrain » (zones + météo + règlement)
+- Cartes offline (limitées)
+- Ballistique avancée avec base munitions
+- Journal illimité + stats annuelles
+- Permis numériques + rappels expiration
+- Sans pub
+
+### Pro — 9,99 $/mois ou 79 $/an
+- Tout Premium +
+- Cartes offline illimitées (topo, ZECs, zones privées)
+- Partage de camp (jusqu'à 6 chasseurs)
+- IA photo-identification gibier
+- Export fiscal (guides pros + pourvoiries)
+- Support prioritaire
+
+### Pricing régional (parité pouvoir d'achat)
+- 🇨🇦 CAD 5,99 / 9,99 (Premium / Pro)
+- 🇺🇸 USD 4,99 / 9,99
+- 🇪🇺 EUR 4,99 / 9,99
+- 🇨🇭 CHF 5,50 / 10,99
+
+## Projections (conservateur)
+
+| Année | Abonnés payants | Split P/Pro | Revenu annuel |
+|---|---|---|---|
+| 1 | 500 | 80/20 | 18 000 $ |
+| 2 | 3 000 | 75/25 | 115 000 $ |
+| 3 | 10 000 | 70/30 | 405 000 $ |
+| 4 | 25 000 | 65/35 | 1,05 M$ |
+| 5 | 50 000 | 60/40 | 2,2 M$ |
+
+Hypothèses : churn 15 %/an, conversion free→paid 3 %, ARPU ~47 $/an.
+
+## Go-to-market
+
+**An 1 — Québec (base)** : saisons 2026-2027 en place, groupes FB chasse, YouTube influenceurs, partenariat magasins plein air (LaCordée, Latulippe), sponsoring Salon National du Grand Air.
+
+**An 2 — Canada + USA pilote** : toutes provinces, 5 états pilotes (ME, VT, NH, NY, MT), YouTube outdoor, pourvoiries.
+
+**An 3 — Europe** : France + Belgique + Suisse. Respect des cadres réglementaires locaux (chasse plus encadrée en Europe qu'au QC).
+
+## Différenciateurs vs concurrents
+
+1. Multi-pays natif (OnX = US seulement)
+2. Multilingue fr/en/es/de dès v1
+3. Ballistique intégrée (rare)
+4. Menus + repas en camp (unique)
+5. Journal + IA photo
+6. Prix accessible (39 $/an vs 100 $/an OnX élite)
+7. Respect cultures/règlements locaux
+
+## Architecture technique — roadmap
+
+### Phase 1 — PWA robuste (6 mois)
+- Migration `localStorage` → **IndexedDB** (multi-Go, binaire, async)
+- Bouton **« Préparer pour le terrain »** : download agressif (zones, météo, règlement, tuiles carto) dans IndexedDB avec barre de progression
+- Backend **Flask/FastAPI + Postgres + Stripe** sur VPS Hostinger (même pattern que projet compta)
+- Auth JWT longue durée (fonctionne offline une fois obtenue)
+- Sync différée : queue locale des modifications → push au retour du réseau
+- Admin CMS pour zones/saisons par pays (éviter hardcode)
+- i18n via fichiers JSON (`locales/fr.json`, `en.json`, `es.json`, `de.json`)
+
+### Phase 2 — Wrapper Capacitor pour stores (3 mois)
+- Même code PWA packagé iOS + Android via Capacitor
+- Présence App Store + Play Store
+- Stripe sur web + Apple IAP (requis sur iOS, 30 % commission)
+- Stratégie auth : création compte via web (Stripe direct), login dans l'app
+
+### Phase 3 — App native (optionnel, an 2-3)
+- React Native si volumes justifient
+- SQLite offline (meilleur que IndexedDB pour grosses bases)
+- Cartes natives (MapKit iOS, Mapbox SDK)
+- Notifications push riches
+- GPS arrière-plan pour tracking live
+
+## Offline-first — stratégie
+
+L'utilisateur part à la chasse sans internet. Il doit avoir :
+
+1. **Avant départ** : clic sur « Préparer » → télécharge tout ce qui concerne le voyage (zones, règlement, météo 7j, tuiles carto, lunaison, heures or)
+2. **Pendant** : fonctionne 100 % offline, écrit dans IndexedDB
+3. **Au retour** : sync automatique des journaux/waypoints/photos vers backend
+
+Stockage local :
+- `localStorage` — config légère (préférences UI)
+- `IndexedDB` — tout le reste (zones, journal, waypoints, photos, tuiles carto)
+- `Service Worker` — cache agressif des assets statiques
+
+## Déploiement actuel
+
+- `D:/chasse/` — dev local (repo privé jeffze/chasse)
+- `D:/chasse-prod/` — assets à déployer (zones.json) → repo henribot89109/chasse-prod
+- Agent avec `hbot89109@gmail.com` a accès à henribot89109 uniquement → upload FTP vers `https://www.strategief.com/Chasse/`
+- Remote `agent-full` sur `D:/chasse/` pour push refonte complète vers henribot89109/chasse (rare, sur demande explicite)
+
+Procédures :
+```powershell
+# Nouvelle data (flux courant)
+cd D:\chasse-prod ; git add zones.json ; git commit -m "..." ; git push
+
+# Dev normal
+cd D:\chasse ; git push
+
+# Refonte complète partagée avec l'agent
+cd D:\chasse ; git push origin ; git push agent-full
+```
+
+## Étapes immédiates (2-4 semaines)
+
+1. Choisir nom commercial (Chasse est générique — idées : HuntReady, ChasseTrack, Traque, BoussoleChasse, etc.)
+2. Enregistrer domaine + marque
+3. Migration `localStorage` → `IndexedDB`
+4. Prototype backend minimal (auth + sync) sur VPS existant
+5. Implémenter « Préparer pour le terrain »
