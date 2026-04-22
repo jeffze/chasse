@@ -993,32 +993,41 @@ body.night-mode #nightModeToggle {
     ];
 
     // --- DÉFINITION DE TOUTES LES FONCTIONS ---
+// Données saisons 2026 — source officielle MELCCFP Québec (mise à jour 2026-04-22)
+// https://www.quebec.ca/tourisme-loisirs-sport/activites-sportives-et-de-plein-air/chasse-sportive/periodes-limites
 const STATIC_ZONES_SUMMARY = {
     "6": {
         title: "Zone 6 (Nord et Sud)",
         species: [
             {
                 name: "Cerf de Virginie 🦌",
-                note: "Mâle avec 3 pointes ou plus sur au moins un côté du panache.",
+                note: "Voir règlement pour normes de panache (RTLB applicables).",
                 periods: [
-                    { weapon: "Arc / Arbalète", dates: "4 oct. au 17 oct. 2025" },
-                    { weapon: "Arme à feu (sauf carabine), Poudre noire, Arc / Arbalète", dates: "18 oct. au 22 oct. 2025" },
-                    { weapon: "Toutes armes", dates: "8 nov. au 23 nov. 2025" }
+                    { weapon: "Arc / Arbalète", dates: "3 oct. au 16 oct. 2026" },
+                    { weapon: "Relève", dates: "31 oct. au 1er nov. 2026" },
+                    { weapon: "Armes à feu", dates: "7 nov. au 22 nov. 2026" }
+                ]
+            },
+            {
+                name: "Orignal",
+                note: "Permis sans bois au tirage au sort (réforme 2026).",
+                periods: [
+                    { weapon: "Arc / Arbalète", dates: "3 oct. au 9 oct. 2026" },
+                    { weapon: "Toutes armes", dates: "17 oct. au 25 oct. 2026" }
                 ]
             },
             {
                 name: "Ours Noir 🐻",
                 periods: [
-                    { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2025" },
-                    { weapon: "Automne (Arc / Arbalète)", dates: "4 oct. au 17 oct. 2025" },
-                    { weapon: "Automne (Toutes armes)", dates: "8 nov. au 23 nov. 2025" }
+                    { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2026" },
+                    { weapon: "Automne (Arc / Arbalète)", dates: "3 oct. au 16 oct. 2026" }
                 ]
             },
             {
                 name: "Dindon Sauvage 🦃",
                 periods: [
-                    { weapon: "Printemps (avec barbe)", dates: "25 avr. au 19 mai 2025" },
-                    { weapon: "Automne (avec ou sans barbe)", dates: "25 oct. au 31 oct. 2025" }
+                    { weapon: "Printemps (avec barbe)", dates: "24 avril au 18 mai 2026" },
+                    { weapon: "Automne (avec ou sans barbe)", dates: "24 oct. au 30 oct. 2026" }
                 ]
             }
         ]
@@ -1029,21 +1038,27 @@ const STATIC_ZONES_SUMMARY = {
             {
                 name: "Cerf de Virginie 🦌",
                 periods: [
-                    { weapon: "Arc / Arbalète", dates: "4 oct. au 17 oct. 2025" },
-                    { weapon: "Arme à feu (sauf carabine), Poudre noire, Arc / Arbalète", dates: "18 oct. au 22 oct. 2025" },
-                    { weapon: "Toutes armes", dates: "8 nov. au 23 nov. 2025" }
+                    { weapon: "Arc / Arbalète", dates: "3 oct. au 16 oct. 2026" },
+                    { weapon: "Relève", dates: "31 oct. au 1er nov. 2026" },
+                    { weapon: "Armes à feu", dates: "7 nov. au 22 nov. 2026" }
                 ]
             },
-            { name: "Orignal", note: "Chasse non permise dans la zone 7. 🚫", periods: [] },
+            {
+                name: "Orignal",
+                note: "Zone 7 : arc / arbalète uniquement (pas de saison arme à feu).",
+                periods: [
+                    { weapon: "Arc / Arbalète", dates: "3 oct. au 16 oct. 2026" }
+                ]
+            },
             {
                 name: "Ours Noir 🐻",
-                periods: [ { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2025" } ]
+                periods: [ { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2026" } ]
             },
             {
                 name: "Dindon Sauvage 🦃",
                 periods: [
-                    { weapon: "Printemps (avec barbe)", dates: "25 avr. au 19 mai 2025" },
-                    { weapon: "Automne (avec ou sans barbe)", dates: "25 oct. au 31 oct. 2025" }
+                    { weapon: "Printemps (avec barbe)", dates: "24 avril au 18 mai 2026" },
+                    { weapon: "Automne (avec ou sans barbe)", dates: "24 oct. au 30 oct. 2026" }
                 ]
             }
         ]
@@ -1052,31 +1067,31 @@ const STATIC_ZONES_SUMMARY = {
         title: "Zone 27 Ouest",
         species: [
             {
-                name: "Orignal ",
-                note: "Mâle avec bois (10 cm ou plus). Attention aux périodes spécifiques aux ZECs.",
+                name: "Orignal",
+                note: "Mâle avec bois (10 cm ou plus). Permis sans bois au tirage (réforme 2026). Vérifier règlements ZEC.",
                 periods: [
-                    { weapon: "Arc / Arbalète", dates: "20 sept. au 5 oct. 2025" },
-                    { weapon: "Toutes armes", dates: "11 oct. au 26 oct. 2025" }
+                    { weapon: "Arc / Arbalète", dates: "19 sept. au 4 oct. 2026" },
+                    { weapon: "Toutes armes", dates: "10 oct. au 25 oct. 2026" }
                 ]
             },
             {
                 name: "Cerf de Virginie 🦌",
                 periods: [
-                    { weapon: "Relève seulement", dates: "1 nov. au 2 nov. 2025" },
-                    { weapon: "Toutes armes", dates: "8 nov. au 16 nov. 2025" }
+                    { weapon: "Arc / Arbalète", dates: "3 oct. au 16 oct. 2026" },
+                    { weapon: "Relève", dates: "31 oct. au 1er nov. 2026" },
+                    { weapon: "Armes à feu", dates: "7 nov. au 15 nov. 2026" }
                 ]
             },
             {
                 name: "Ours Noir 🐻",
                 periods: [
-                    { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2025" },
-                    { weapon: "Automne (Arc / Arbalète)", dates: "20 sept. au 5 oct. 2025" },
-                    { weapon: "Automne (Toutes armes)", dates: "11 oct. au 19 oct. 2025" }
+                    { weapon: "Printemps (Toutes armes)", dates: "15 mai au 30 juin 2026" },
+                    { weapon: "Automne (Arc / Arbalète)", dates: "10 oct. au 25 oct. 2026" }
                 ]
             },
             {
                 name: "Dindon Sauvage 🦃",
-                periods: [ { weapon: "Printemps (avec barbe)", dates: "25 avr. au 19 mai 2025" } ]
+                periods: [ { weapon: "Printemps (avec barbe)", dates: "24 avril au 18 mai 2026" } ]
             }
         ]
     }

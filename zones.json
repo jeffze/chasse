@@ -1,37 +1,46 @@
 {
     "1": {
         "Orignal": [
-            { "period": "Arc/Arbalète", "dates": "27 sept. au 12 oct." },
-            { "period": "Arme à feu", "dates": "18 oct. au 2 nov." }
+            { "period": "Arc/Arbalète", "dates": "26 sept. au 4 oct. 2026" },
+            { "period": "Toutes armes", "dates": "17 oct. au 25 oct. 2026" }
         ],
         "Ours Noir": [
-            { "period": "Printemps", "dates": "15 mai au 30 juin" }
+            { "period": "Printemps (toutes armes)", "dates": "15 mai au 30 juin 2026" },
+            { "period": "Automne (arc/arbalète)", "dates": "26 sept. au 4 oct. 2026" }
         ]
     },
     "2": {
         "Orignal": [
-            { "period": "Arc/Arbalète", "dates": "27 sept. au 12 oct." },
-            { "period": "Arme à feu", "dates": "18 oct. au 2 nov." }
+            { "period": "Arc/Arbalète", "dates": "26 sept. au 4 oct. 2026" },
+            { "period": "Armes à feu, arbalète et arc (sauf cantons Macpès/Duquesne)", "dates": "17 oct. au 25 oct. 2026" }
         ],
         "Ours Noir": [
-            { "period": "Printemps", "dates": "15 mai au 30 juin" }
+            { "period": "Printemps (arc/arbalète seulement)", "dates": "15 mai au 30 juin 2026" },
+            { "period": "Automne (arc/arbalète)", "dates": "3 oct. au 16 oct. 2026" }
         ],
         "Chevreuil": [
-            { "period": "Arc/Arbalète", "dates": "27 sept. au 12 oct." },
-            { "period": "Arme à feu", "dates": "8 nov. au 23 nov." }
+            { "period": "Arc/Arbalète (Zone 2 Est et Ouest)", "dates": "3 oct. au 16 oct. 2026" },
+            { "period": "Relève (toutes armes)", "dates": "31 oct. au 1er nov. 2026" },
+            { "period": "Armes à feu (Zone 2 Est)", "dates": "7 nov. au 15 nov. 2026" },
+            { "period": "Armes à feu (Zone 2 Ouest)", "dates": "7 nov. au 22 nov. 2026" }
         ]
     },
     "27 Ouest": {
         "Orignal": [
-            { "period": "Arc/Arbalète", "dates": "4 oct. au 12 oct." },
-            { "period": "Arme à feu", "dates": "18 oct. au 26 oct." }
+            { "period": "Arc/Arbalète", "dates": "19 sept. au 4 oct. 2026" },
+            { "period": "Toutes armes", "dates": "10 oct. au 25 oct. 2026" }
         ],
         "Chevreuil": [
-            { "period": "Arc/Arbalète", "dates": "27 sept. au 12 oct." },
-            { "period": "Arme à feu", "dates": "8 nov. au 16 nov." }
+            { "period": "Arc/Arbalète", "dates": "3 oct. au 16 oct. 2026" },
+            { "period": "Relève", "dates": "31 oct. au 1er nov. 2026" },
+            { "period": "Armes à feu", "dates": "7 nov. au 15 nov. 2026" }
+        ],
+        "Ours Noir": [
+            { "period": "Printemps (toutes armes)", "dates": "15 mai au 30 juin 2026" },
+            { "period": "Automne (arc/arbalète)", "dates": "10 oct. au 25 oct. 2026" }
         ],
         "Dindon Sauvage": [
-            { "period": "Printemps", "dates": "29 avril au 10 mai" }
+            { "period": "Printemps (avec barbe)", "dates": "24 avril au 18 mai 2026" }
         ]
     }
 }
