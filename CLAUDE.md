@@ -216,27 +216,45 @@ Stockage local :
 
 ## Déploiement actuel
 
-- `D:/chasse/` — dev local (repo privé jeffze/chasse)
-- `D:/chasse-prod/` — assets à déployer (zones.json) → repo henribot89109/chasse-prod
-- Agent avec `hbot89109@gmail.com` a accès à henribot89109 uniquement → upload FTP vers `https://www.strategief.com/Chasse/`
-- Remote `agent-full` sur `D:/chasse/` pour push refonte complète vers henribot89109/chasse (rare, sur demande explicite)
+### Flux principal — cPanel Git Deploy (WHC) — depuis 2026-04-30
 
-Procédures :
+- Dev local : `D:/Chasse/` → repo `jeffze/chasse` (GitHub)
+- WHC cPanel a un repo git cloné dans `/home/labelle1/repos/chasse`
+- À chaque déploiement, le `.cpanel.yml` (à la racine du repo) copie `chasse.html`, `sw.js`, `manifest.webmanifest`, `zones.json` vers `/home/labelle1/public_html/Chasse/` (servi sur `https://www.strategief.com/Chasse/`)
+
+Procédure :
 ```powershell
-# Nouvelle data (flux courant)
+# 1. Push depuis le local
+cd D:\Chasse ; git push
+
+# 2. cPanel WHC → Git Version Control → Manage (chasse)
+#    → Pull or Deploy → Update from Remote → Deploy HEAD Commit
+```
+
+Le déploiement n'est pas automatique au push : il faut cliquer dans cPanel. Un webhook GitHub → cPanel pourrait l'automatiser (à faire si besoin).
+
+Pour ajouter un fichier à la liste déployée : éditer `.cpanel.yml` à la racine du repo.
+
+### Flux historique — FTP via henribot89109 (fallback / data only)
+
+Conservé comme alternative si le git-deploy cPanel est indispo :
+
+- `D:/chasse-prod/` — assets à déployer (zones.json) → repo `henribot89109/chasse-prod`
+- Agent avec `hbot89109@gmail.com` a accès à `henribot89109` uniquement → upload FTP vers `https://www.strategief.com/Chasse/`
+- Remote `agent-full` sur `D:/Chasse/` pour push refonte complète vers `henribot89109/chasse` (rare, sur demande explicite)
+
+```powershell
+# Push data via le repo séparé
 cd D:\chasse-prod ; git add zones.json ; git commit -m "..." ; git push
 
-# Dev normal
-cd D:\chasse ; git push
-
-# Refonte complète partagée avec l'agent
-cd D:\chasse ; git push origin ; git push agent-full
+# Refonte complète partagée avec l'agent FTP
+cd D:\Chasse ; git push origin ; git push agent-full
 ```
 
 ## Étapes immédiates (2-4 semaines)
 
 1. Choisir nom commercial (Chasse est générique — idées : HuntReady, ChasseTrack, Traque, BoussoleChasse, etc.)
 2. Enregistrer domaine + marque
-3. Migration `localStorage` → `IndexedDB`
+3. ~~Migration `localStorage` → `IndexedDB`~~ ✅ livrée 2026-04-30 (commit 816faca)
 4. Prototype backend minimal (auth + sync) sur VPS existant
 5. Implémenter « Préparer pour le terrain »
