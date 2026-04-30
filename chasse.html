@@ -275,6 +275,9 @@ body.night-mode #nightModeToggle {
                 <button id="markEventBtn" class="secondary" title="Enregistre un waypoint rapide à votre position actuelle avec l'heure">🚩 Marquer Événement</button>
                 <button id="sharePosBtn" class="secondary" title="Partager votre position actuelle par SMS">📲 Partager Position</button>
             </div>
+            <div class="hr"></div>
+            <button id="prepareBtn" class="primary" style="width:100%;" title="Télécharge zones et météo pour usage hors-ligne">🎒 Préparer pour le terrain</button>
+            <div id="preparedStatus" class="small muted" style="margin-top:6px; text-align:center;"></div>
         </div>
     </div>
 
@@ -1074,6 +1077,7 @@ body.night-mode #nightModeToggle {
     const PACK_LISTS_KEY = 'chassePackLists';
     const PLANS_KEY = 'chasseMealPlans';
     const PRESET_KEY = 'chassePresets'; // <-- CORRECTION : CONSTANTE MANQUANTE AJOUTÉE
+    const PREPARED_KEY = 'chasseLastPreparedAt';
     const PRESET_DEFAULTS = { // <-- CORRECTION : CONSTANTE MANQUANTE AJOUTÉE
         "Rivière-à-Pierre — Orignal": { lat: 47.07253, lng: -72.23841 },
         "Rivière-à-Pierre — Ours": { lat: 47.09111, lng: -72.20567 },
@@ -1905,10 +1909,88 @@ function importAllPermis() {
             showToast("Données des zones mises à jour.", "ok");
             return data;
         } catch (error) {
+            // Fallback : zones.json local servi à côté de chasse.html
+            try {
+                const localResp = await fetch('./zones.json');
+                if (localResp.ok) {
+                    const data = await localResp.json();
+                    store.set(ZONES_KEY, { timestamp: Date.now(), data: data });
+                    showToast("Zones chargées depuis le fichier local.", "ok");
+                    return data;
+                }
+            } catch (_) { /* fallback aussi en panne, on retombera sur le cache */ }
             showToast("Synchro impossible (hors-ligne ?). Utilisation du cache.", "warn");
             const cache = store.get(ZONES_KEY, null);
             return cache ? cache.data : null;
         }
+    }
+
+    async function prepareForField() {
+        const btn = $('#prepareBtn');
+        const originalLabel = btn ? btn.textContent : '';
+        if (btn) { btn.disabled = true; btn.textContent = '🎒 Préparation…'; }
+
+        // Résolution coords : champs lat/lng → camp → échec météo seul
+        let lat = parseFloat($('#lat').value);
+        let lng = parseFloat($('#lng').value);
+        if ((isNaN(lat) || isNaN(lng)) && camp && camp.lat != null && camp.lng != null) {
+            lat = camp.lat; lng = camp.lng;
+            $('#lat').value = String(lat);
+            $('#lng').value = String(lng);
+            store.set('lat', String(lat));
+            store.set('lng', String(lng));
+        }
+        const haveCoords = !isNaN(lat) && !isNaN(lng);
+
+        const tasks = [
+            { name: 'zones', run: () => syncZonesData().then(d => d ? 'ok' : 'fail') },
+            { name: 'météo', run: () => haveCoords
+                ? fetchWeather().then(() => 'ok').catch(() => 'fail')
+                : Promise.resolve('skip-no-coords') }
+        ];
+
+        const results = await Promise.allSettled(tasks.map(t => t.run()));
+        const failed = [];
+        const skipped = [];
+        results.forEach((r, i) => {
+            const v = r.status === 'fulfilled' ? r.value : 'fail';
+            if (v === 'fail') failed.push(tasks[i].name);
+            else if (v === 'skip-no-coords') skipped.push(tasks[i].name);
+        });
+
+        if (failed.length === 0 && skipped.length === 0) {
+            store.set(PREPARED_KEY, Date.now());
+            showToast('🎒 Prêt pour le terrain !', 'ok');
+        } else if (failed.length === 0 && skipped.length > 0) {
+            store.set(PREPARED_KEY, Date.now());
+            showToast(`Préparé sans ${skipped.join(', ')} (coords manquantes).`, 'warn');
+        } else {
+            showToast(`Préparation partielle : échec ${failed.join(', ')}.`, 'warn');
+        }
+
+        renderPreparedStatus();
+        populateZoneSelector();
+        if (btn) { btn.disabled = false; btn.textContent = originalLabel || '🎒 Préparer pour le terrain'; }
+    }
+
+    function renderPreparedStatus() {
+        const el = $('#preparedStatus');
+        if (!el) return;
+        const ts = store.get(PREPARED_KEY, null);
+        if (!ts) {
+            el.textContent = 'Pas encore préparé';
+            return;
+        }
+        const ageMs = Date.now() - ts;
+        const ageMin = Math.floor(ageMs / 60000);
+        const ageH = Math.floor(ageMs / 3600000);
+        const ageD = Math.floor(ageH / 24);
+        let txt;
+        if (ageD >= 1) txt = `Préparé il y a ${ageD} j ✓`;
+        else if (ageH >= 1) txt = `Préparé il y a ${ageH} h ✓`;
+        else if (ageMin >= 1) txt = `Préparé il y a ${ageMin} min ✓`;
+        else txt = `Préparé à l'instant ✓`;
+        el.textContent = txt;
     }
 
     function buildTabs() {
@@ -2395,7 +2477,9 @@ function createFilenameTimestamp() {
         renderWeather();
         refreshCampOptions();
         if (camp) renderCompass();
+        renderPreparedStatus();
         setInterval(tick, 1000);
+        setInterval(renderPreparedStatus, 60000);
         updateBadge();
         setInterval(updateBadge, 5000);
         if (store.get('nightMode', false)) {
@@ -2609,7 +2693,8 @@ switch (data.type) {
         $('#importPackListBtn')?.addEventListener('click', importPackList);
         $('#exportPermisBtn')?.addEventListener('click', exportAllPermis);
         $('#importPermisBtn')?.addEventListener('click', importAllPermis);
-        
+        $('#prepareBtn')?.addEventListener('click', prepareForField);
+
     }
 
     init();
