@@ -940,10 +940,107 @@ body.night-mode #nightModeToggle {
     const $$ = sel => [...document.querySelectorAll(sel)];
     const pad = n => (n < 10 ? "0" : "") + n;
     const fmt = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    const store = {
-        get(k, def) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : def } catch (e) { return def } },
-        set(k, v) { localStorage.setItem(k, JSON.stringify(v)) }
-    };
+    // Store : cache mémoire synchrone, persisté en IndexedDB (fallback localStorage).
+    // L'API publique (get/set/remove) reste synchrone — init() doit être awaité au boot.
+    const store = (() => {
+        const DB_NAME = 'chasse';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'kv';
+        const MIGRATION_KEYS = [
+            'chassePermis', 'chasseZonesData', 'chasseJournal', 'chasseWeatherCache',
+            'chasseCamp', 'chassePackLists', 'chasseMealPlans', 'chassePresets',
+            'waypoints', 'notes', 'lat', 'lng', 'date', 'declinaison', 'nightMode'
+        ];
+        let db = null;
+        let cache = Object.create(null);
+        let writeQueue = Promise.resolve();
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open(DB_NAME, DB_VERSION);
+                req.onupgradeneeded = () => {
+                    const _db = req.result;
+                    if (!_db.objectStoreNames.contains(STORE_NAME)) _db.createObjectStore(STORE_NAME);
+                };
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+                req.onblocked = () => reject(new Error('IndexedDB open blocked'));
+            });
+        }
+
+        function loadAll() {
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const cur = tx.objectStore(STORE_NAME).openCursor();
+                cur.onsuccess = () => {
+                    const c = cur.result;
+                    if (c) { cache[c.key] = c.value; c.continue(); }
+                };
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        function enqueueWrite(fn) {
+            writeQueue = writeQueue.then(() => new Promise(resolve => {
+                try {
+                    const tx = db.transaction(STORE_NAME, 'readwrite');
+                    fn(tx.objectStore(STORE_NAME));
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => { console.warn('[store] IDB tx error', tx.error); resolve(); };
+                    tx.onabort = () => { console.warn('[store] IDB tx abort', tx.error); resolve(); };
+                } catch (e) { console.warn('[store] IDB tx threw', e); resolve(); }
+            }));
+        }
+
+        async function migrateFromLocalStorage() {
+            let migrated = 0;
+            for (const k of MIGRATION_KEYS) {
+                if (k in cache) continue;
+                const raw = localStorage.getItem(k);
+                if (raw == null) continue;
+                try {
+                    const v = JSON.parse(raw);
+                    cache[k] = v;
+                    enqueueWrite(os => os.put(v, k));
+                    migrated++;
+                } catch (_) { /* valeur corrompue, on saute */ }
+            }
+            if (migrated > 0) {
+                await writeQueue;
+                console.info(`[store] Migré ${migrated} clé(s) localStorage → IndexedDB`);
+            }
+        }
+
+        return {
+            async init() {
+                try {
+                    db = await openDB();
+                    await loadAll();
+                    await migrateFromLocalStorage();
+                } catch (e) {
+                    console.warn('[store] IndexedDB indisponible, fallback localStorage', e);
+                    db = null;
+                    cache = Object.create(null);
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        try { cache[k] = JSON.parse(localStorage.getItem(k)); } catch (_) {}
+                    }
+                }
+            },
+            get(k, def) { return (k in cache) ? cache[k] : def; },
+            set(k, v) {
+                cache[k] = v;
+                if (db) enqueueWrite(os => os.put(v, k));
+                else { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} }
+            },
+            remove(k) {
+                delete cache[k];
+                if (db) enqueueWrite(os => os.delete(k));
+                else { try { localStorage.removeItem(k); } catch (_) {} }
+            }
+        };
+    })();
 
     // --- VARIABLES GLOBALES CENTRALISÉES ---
     let waypoints = [];
@@ -951,7 +1048,7 @@ body.night-mode #nightModeToggle {
     let currentTrackingSession = [];
     let journal = [];
     let currentWind = { temp: null, speed: null, direction: null };
-    let camp = store.get('chasseCamp', null);
+    let camp = null; // hydraté dans init() après store.init()
     let currentPos = { lat: null, lng: null };
     let watchId = null;
     let heading = null;
@@ -2278,7 +2375,9 @@ function createFilenameTimestamp() {
         totalEl.textContent = n > 1 ? `Distance totale : ${totalKm < 1 ? (totalKm*1000).toFixed(0)+'m' : totalKm.toFixed(2)+'km'}` : '';
     }
 
-    function init() {
+    async function init() {
+        await store.init();
+        camp = store.get(CAMP_KEY, null);
         buildTabs();
         loadInitialData();
         loadAllPackLists();
@@ -2428,7 +2527,7 @@ switch (data.type) {
     
     e.target.value = ''; // Réinitialise le champ pour permettre la sélection du même fichier à nouveau
 });
-        $('#resetBtn')?.addEventListener('click', () => { if (confirm('Réinitialiser TOUTES les données (blocs, waypoints, notes, menus, etc.) ?')) { [ 'notes', 'lat', 'lng', 'date', 'waypoints', 'chasseCamp', 'declinaison', PLANS_KEY, PACK_LISTS_KEY, LOG_KEY, 'chassePresets' ].forEach(k => localStorage.removeItem(k)); location.reload(); } });
+        $('#resetBtn')?.addEventListener('click', () => { if (confirm('Réinitialiser TOUTES les données (blocs, waypoints, notes, menus, etc.) ?')) { [ 'notes', 'lat', 'lng', 'date', 'waypoints', 'chasseCamp', 'declinaison', PLANS_KEY, PACK_LISTS_KEY, LOG_KEY, 'chassePresets' ].forEach(k => store.remove(k)); location.reload(); } });
         // Boutons d'exportation modulaire (Waypoints, Permis, etc.)
         $$('.export-btn').forEach(button => {
             button.addEventListener('click', (e) => {

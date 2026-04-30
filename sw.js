@@ -1,5 +1,5 @@
 // /sw.js
-const CACHE = 'chasse-v1';
+const CACHE = 'chasse-v2';
 const HTML_PATH = '/Chasse/chasse.html'; // adapte si tu changes l'emplacement
 
 self.addEventListener('install', (e) => {
