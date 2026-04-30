@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/labelle1/public_html/Chasse/
+    - /bin/cp chasse.html $DEPLOYPATH
+    - /bin/cp sw.js $DEPLOYPATH
+    - /bin/cp manifest.webmanifest $DEPLOYPATH
+    - /bin/cp zones.json $DEPLOYPATH
